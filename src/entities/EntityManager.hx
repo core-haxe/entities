@@ -1,16 +1,16 @@
 package entities;
 
-import promises.PromiseUtils;
 import db.ColumnOptions;
-import db.TableSchema;
-import db.Record;
-import db.Query;
-import haxe.Unserializer;
-import haxe.Resource;
 import db.DatabaseError;
 import db.IDatabase;
-import promises.Promise;
+import db.Query;
+import db.Record;
+import db.TableSchema;
 import haxe.Constraints.Constructible;
+import haxe.Resource;
+import haxe.Unserializer;
+import promises.Promise;
+import promises.PromiseUtils;
 
 @:access(entities.Entity)
 class EntityManager {
@@ -45,6 +45,25 @@ class EntityManager {
                 var entity = new T();
                 entity.db = this.db;
                 return entity.load(id);
+            }).then(entity -> {
+                if (!entity._populated) {
+                    resolve(null);
+                    return;
+                }
+                resolve(entity);
+            }, error -> {
+                reject(error);
+            });
+        });
+    }
+
+    @:generic
+    public function find<T:Constructible<Void->Void> & Entity<T>>(query:QueryExpr, entityClass:Class<T>):Promise<T> {
+        return new Promise((resolve, reject) -> {
+            connect().then(result -> {
+                var entity = new T();
+                entity.db = this.db;
+                return entity.find(query);
             }).then(entity -> {
                 if (!entity._populated) {
                     resolve(null);

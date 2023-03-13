@@ -2,15 +2,16 @@ package entities;
 
 import db.DatabaseError;
 import db.IDatabase;
-import promises.Promise;
-import db.Record;
 import db.Query;
+import db.Record;
+import promises.Promise;
 
 @:autoBuild(entities.macros.EntityBuilder.build())
 class Entity<T> implements IEntity<T> {
+    @:jignored
 	public var db:IDatabase;
 
-    @:noCompletion
+    @:jignored @:noCompletion
     private var _populated:Bool = false;
 
     public function new() {

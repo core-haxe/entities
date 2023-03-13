@@ -1,12 +1,14 @@
 package entities.macros;
 
+import entities.EntityDefinition;
+import haxe.Resource;
 import haxe.Serializer;
 import haxe.Unserializer;
 import haxe.io.Bytes;
-import haxe.Resource;
-import entities.EntityDefinition;
+import haxe.macro.ComplexTypeTools;
 import haxe.macro.Context;
 import haxe.macro.Expr;
+import haxe.macro.TypeTools;
 
 using StringTools;
 
@@ -31,18 +33,14 @@ class EntityBuilder {
             className: localClassName
         }
 
-        /*
-        entityDef.fields.push({
-            name: primaryKeyFieldName,
-            type: entities.EntityFieldType.Integer
-        });
-        */
-        fields.push({
-            name: primaryKeyFieldName,
-            access: [APublic],
-            kind: FVar(macro: Int),
-            pos: Context.currentPos()
-        });
+        if (!hasField(fields, primaryKeyFieldName)) {
+            fields.push({
+                name: primaryKeyFieldName,
+                access: [APublic],
+                kind: FVar(macro: Null<Int>),
+                pos: Context.currentPos()
+            });
+        }
 
         fields.push({
             name: "definition",
@@ -85,7 +83,8 @@ class EntityBuilder {
                 case FVar(t, e):
                     switch (t) {
                         case TPath(p):
-                            if (p.name == "String") {
+                            var typeName = ComplexTypeTools.toString(t);
+                            if (typeName == "String") {
                                 var options = [];
                                 if (field.name == primaryKeyFieldName) {
                                     options = [EntityFieldOption.PrimaryKey];
@@ -98,7 +97,7 @@ class EntityBuilder {
                                 setFieldExprs.push(macro if (id == $v{field.name}) {
                                     return $i{field.name} = value;
                                 });
-                            } else if (p.name == "Int") {
+                            } else if (typeName == "Int" || typeName == "Null<Int>") {
                                 var options = [];
                                 if (field.name == primaryKeyFieldName) {
                                     options = [EntityFieldOption.PrimaryKey];
@@ -111,7 +110,7 @@ class EntityBuilder {
                                 setFieldExprs.push(macro if (id == $v{field.name}) {
                                     return $i{field.name} = value;
                                 });
-                            } else if (p.name == "Array") {
+                            } else if (typeName == "Array") {
                                 switch(p.params[0]) {
                                     case TPType(t): 
                                         switch (t) {
@@ -305,6 +304,15 @@ class EntityBuilder {
         writeEntityDef(entityDef);
 
         return fields;
+    }
+
+    private static function hasField(fields:Array<Field>, name:String):Bool {
+        for (field in fields) {
+            if (field.name == name) {
+                return true;
+            }
+        }
+        return false;
     }
 
     #if macro 
