@@ -301,6 +301,27 @@ class EntityBuilder {
             }
         }
 
+        var toRecordFnExprs:Array<Expr> = [];
+        toRecordFnExprs.push(macro var r = new db.Record());
+        for (defField in entityDef.fields) {
+            var fieldName = defField.name;
+            toRecordFnExprs.push(macro r.field($v{fieldName}, this.$fieldName));
+        }
+        toRecordFnExprs.push(macro return r);
+
+        var toRecordFn:Field = {
+            name: "toRecord",
+            access: [APrivate, AOverride],
+            kind: FFun({
+                args: [],
+                expr: macro $b{toRecordFnExprs},
+                ret: macro: db.Record
+            }),
+            pos: Context.currentPos()
+        }
+        fields.push(toRecordFn);
+
+
         writeEntityDef(entityDef);
 
         return fields;
