@@ -6,6 +6,7 @@ import db.Query;
 import db.Record;
 import promises.Promise;
 
+@:access(entities.EntityManager)
 @:autoBuild(entities.macros.EntityBuilder.build())
 class Entity<T> implements IEntity<T> {
     @:jignored
@@ -47,6 +48,54 @@ class Entity<T> implements IEntity<T> {
                 this._populated = true;
                 resolve(cast this);
             }, (error:DatabaseError) -> {
+                reject(error);
+            });
+        });
+    }
+
+    public function add():Promise<T> {
+        return new Promise((resolve, reject) -> {
+            var tableName = this.definition().tableName;
+            var primaryKeyName = this.definition().primaryKeyName;
+            var primaryKeyValue = Reflect.field(this, primaryKeyName);
+            
+            connect().then(result -> {
+                return db.table(tableName);
+            }).then(result -> {
+                var record = this.toRecord();
+                return result.table.add(record);
+            }).then(result -> {
+                var insertedId:Int = result.data.field("_insertedId");
+                Reflect.setField(this, primaryKeyName, insertedId);
+                resolve(cast this);
+            }, error -> {
+                reject(error);
+            });
+        });
+    }
+
+    public function update():Promise<T> {
+        return new Promise((resolve, reject) -> {
+            var tableName = this.definition().tableName;
+            var primaryKeyName = this.definition().primaryKeyName;
+            var primaryKeyValue = Reflect.field(this, primaryKeyName);
+
+            connect().then(result -> {
+                return db.table(tableName);
+            }).then(result -> {
+                var record = this.toRecord();
+                var field = primaryKeyName;
+                var q = Query.query($field = primaryKeyValue);
+                // TODO: find a nicer way to do this
+                switch (q) {
+                    case QueryBinop(op, _, e2):
+                        q = QueryBinop(op, QueryConstant(QIdent(field)), e2);
+                    case _:    
+                }
+                return result.table.update(q, record);
+            }).then(result -> {
+                resolve(cast this);
+            }, error -> {
                 reject(error);
             });
         });
@@ -117,5 +166,10 @@ class Entity<T> implements IEntity<T> {
 
     private function addArrayItem(id:String, primaryKey:Int, item:IEntity<Any>) {
 
+    }
+
+    private function connect():Promise<Bool> {
+        this.db = EntityManager.instance.db;
+        return EntityManager.instance.connect();
     }
 }

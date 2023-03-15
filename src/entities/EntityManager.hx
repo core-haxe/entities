@@ -58,7 +58,7 @@ class EntityManager {
     }
 
     @:generic
-    public function find<T:Constructible<Void->Void> & Entity<T>>(query:QueryExpr, entityClass:Class<T>):Promise<T> {
+    public function findOne<T:Constructible<Void->Void> & Entity<T>>(query:QueryExpr, entityClass:Class<T>):Promise<T> {
         return new Promise((resolve, reject) -> {
             connect().then(result -> {
                 var entity = new T();
@@ -120,52 +120,12 @@ class EntityManager {
 
     @:generic
     public function add<T:Constructible<Void->Void> & Entity<T>>(entity:T):Promise<T> {
-        return new Promise((resolve, reject) -> {
-            var tableName = entity.definition().tableName;
-            var primaryKeyName = entity.definition().primaryKeyName;
-            var primaryKeyValue = Reflect.field(entity, primaryKeyName);
-
-            connect().then(result -> {
-                return db.table(tableName);
-            }).then(result -> {
-                var record = entity.toRecord();
-                return result.table.add(record);
-            }).then(result -> {
-                var insertedId:Int = result.data.field("_insertedId");
-                Reflect.setField(entity, primaryKeyName, insertedId);
-                resolve(entity);
-            }, error -> {
-                reject(error);
-            });
-        });
+        return entity.add();
     }
 
     @:generic
     public function update<T:Constructible<Void->Void> & Entity<T>>(entity:T):Promise<T> {
-        return new Promise((resolve, reject) -> {
-            var tableName = entity.definition().tableName;
-            var primaryKeyName = entity.definition().primaryKeyName;
-            var primaryKeyValue = Reflect.field(entity, primaryKeyName);
-
-            connect().then(result -> {
-                return db.table(tableName);
-            }).then(result -> {
-                var record = entity.toRecord();
-                var field = primaryKeyName;
-                var q = Query.query($field = primaryKeyValue);
-                // TODO: find a nicer way to do this
-                switch (q) {
-                    case QueryBinop(op, _, e2):
-                        q = QueryBinop(op, QueryConstant(QIdent(field)), e2);
-                    case _:    
-                }
-                return result.table.update(q, record);
-            }).then(result -> {
-                resolve(entity);
-            }, error -> {
-                reject(error);
-            });
-        });
+        return entity.update();
     }
 
     private var _connected:Bool = false;
