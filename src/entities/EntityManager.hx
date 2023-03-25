@@ -66,4 +66,11 @@ class EntityManager {
             });
         });
     }
+
+    public function reset() {
+        db = null;
+        _connected = false;
+        _propertiesApplied = false;
+        _relationshipsApplied = false;
+    }
 }
