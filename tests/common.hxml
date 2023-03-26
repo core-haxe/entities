@@ -3,3 +3,4 @@
 
 -lib utest
 -lib entities
+-lib db-sqlite
