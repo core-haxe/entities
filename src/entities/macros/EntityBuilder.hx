@@ -975,6 +975,18 @@ class EntityBuilder {
                         pack: parts
                     };
                     var classComplexType = TPath(classType);
+                    var resolvedClass = Context.resolveType(classComplexType, Context.currentPos());
+                    var resolvedPrimaryKeyType = macro: Any;
+                    switch (resolvedClass) {
+                        case TInst(t, params):
+                            for (resolvedClassField in t.get().fields.get()) {
+                                if (hasMeta(resolvedClassField.meta.get(), ":primaryKey")) {
+                                    resolvedPrimaryKeyType = TypeTools.toComplexType(resolvedClassField.type);
+                                    break;
+                                }
+                            }
+                        case _:
+                    }
 
                     fields.push({
                         name: functionName,
@@ -993,7 +1005,7 @@ class EntityBuilder {
                                         var q = db.Query.QueryExpr.QueryBinop(db.Query.QBinop.QOpAssign,db.Query.QueryExpr.QueryConstant(db.Query.QConstant.QIdent($v{linkField1})), db.Query.QueryExpr.QueryValue($i{primaryKeyFieldName}));
                                         return result.table.find(q);
                                     }).then(result -> {
-                                        var dbMap:Map<Any, Bool> = [];
+                                        var dbMap:Map<$resolvedPrimaryKeyType, Bool> = [];
                                         for (record in result.data) {
                                             var foreignKey = record.field($v{linkTableName} + "." + $v{linkField2});
                                             if (foreignKey != null) {
@@ -1001,7 +1013,7 @@ class EntityBuilder {
                                             }
                                         }
 
-                                        var existingMap:Map<Any, $classComplexType> = [];
+                                        var existingMap:Map<$resolvedPrimaryKeyType, $classComplexType> = [];
                                         var creations = [];
                                         if (this.$fieldName != null) {
                                             for (item in this.$fieldName) {
@@ -1365,6 +1377,7 @@ class EntityBuilder {
                             } else {
                                 fromRecords(result.data, definition().tableName);
                             }
+                            return null;
                         }).then(result -> {
                             resolve(true);
                         }, error -> {
@@ -1418,6 +1431,7 @@ class EntityBuilder {
                                     array.push(entity);
                                 }
                             }
+                            return null;
                         }).then(result -> {
                             resolve(array);
                         }, error -> {
