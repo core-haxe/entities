@@ -53,7 +53,15 @@ class EntityBuilder {
                 case FVar(t, e):
                     switch (t) {
                         case TPath(p):
-                            switch (p.name) {
+                            var typeName = p.name;
+                            if (typeName == "Null" && p.params.length == 1) {
+                                switch (p.params[0]) {
+                                    case TPType(TPath(p)):
+                                        typeName = p.name;
+                                    case _:    
+                                }
+                            }
+                            switch (typeName) {
                                 case "Int":
                                     entityDefinition.fields.push({
                                         name: fieldName,
@@ -266,7 +274,7 @@ class EntityBuilder {
             fields.insert(0, {
                 name: primaryKeyName,
                 access: access,
-                kind: FVar(macro: Int),
+                kind: FVar(macro: Null<Int>),
                 meta: meta,
                 pos: Context.currentPos()
             });
@@ -788,7 +796,7 @@ class EntityBuilder {
                     var list = _notificationListeners.get(type);
                     if (list != null) {
                         list.remove(listener);
-                        if (list.length == null) {
+                        if (list.length == 0) {
                             _notificationListeners.remove(type);
                         }
                     }
