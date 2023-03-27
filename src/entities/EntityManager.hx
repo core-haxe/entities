@@ -15,7 +15,7 @@ class EntityManager {
     }
 
     //////////////////////////////////////////////////////////////////////////////
-    public var db:IDatabase;
+    public var database:IDatabase;
     
     private function new() {
     }
@@ -33,7 +33,7 @@ class EntityManager {
             var relationships:Array<String> = haxe.Unserializer.run(relationshipsString);
             for (r in relationships) {
                 var parts = r.split("|");
-                db.defineTableRelationship(parts[0], parts[1]);
+                database.defineTableRelationship(parts[0], parts[1]);
             }
         }
     }
@@ -45,7 +45,7 @@ class EntityManager {
         }
 
         _propertiesApplied = true;
-        db.setProperty("alwaysAliasResultFields", true);
+        database.setProperty("alwaysAliasResultFields", true);
     }
 
     private var _connected:Bool = false;
@@ -58,7 +58,7 @@ class EntityManager {
 
             applyProperties();
             applyTableRelationships();
-            db.connect().then(result -> {
+            database.connect().then(result -> {
                 _connected = true;
                 resolve(true);
             }, (error:DatabaseError) -> {
@@ -68,7 +68,7 @@ class EntityManager {
     }
 
     public function reset() {
-        db = null;
+        database = null;
         _connected = false;
         _propertiesApplied = false;
         _relationshipsApplied = false;
