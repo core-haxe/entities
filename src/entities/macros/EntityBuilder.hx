@@ -14,7 +14,6 @@ class EntityBuilder {
         var localClass = Context.getLocalClass().get();
         localClass.meta.add(":access", [macro entities.EntityManager], Context.currentPos());
 
-                
         var localClassName = Context.getLocalClass().toString();
         Sys.println("building entity " + localClass.name + " [" + localClassName + "]");
 
@@ -599,12 +598,12 @@ class EntityBuilder {
                 ret: macro: promises.Promise<Bool>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
-                        entities.EntityManager.instance.db.table(schema.name).then(result -> {
+                        entities.EntityManager.instance.database.table(schema.name).then(result -> {
                             if (result.table.exists) {
                                 resolve(true);
                                 return null;
                             }
-                            entities.EntityManager.instance.db.createTable(schema.name, schema.columns).then(result -> {
+                            entities.EntityManager.instance.database.createTable(schema.name, schema.columns).then(result -> {
                                 resolve(true);
                             }, error -> {
                                 reject(error);
@@ -630,7 +629,7 @@ class EntityBuilder {
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
                         entities.EntityManager.instance.connect().then(success -> {
-                            this.database = entities.EntityManager.instance.db;
+                            this.database = entities.EntityManager.instance.database;
                             return CheckTables();
                         }).then(entity -> {
                             resolve(true);
@@ -696,10 +695,9 @@ class EntityBuilder {
                     name: "primaryKey",
                     type: primaryKeyType
                 }],
-                ret: macro: db.Query.QueryExpr,
+                ret: macro: Query.QueryExpr,
                 expr: macro {
-                    // TODO: find a nicer way to do this
-                    var q = db.Query.QueryExpr.QueryBinop(db.Query.QBinop.QOpAssign,db.Query.QueryExpr.QueryConstant(db.Query.QConstant.QIdent($v{primaryKeyFieldName})), db.Query.QueryExpr.QueryValue(primaryKey));
+                    var q = Query.query(Query.field($v{primaryKeyFieldName}) = primaryKey);
                     return q;
                 }
             }),
@@ -715,10 +713,9 @@ class EntityBuilder {
                     name: "primaryKey",
                     type: primaryKeyType
                 }],
-                ret: macro: db.Query.QueryExpr,
+                ret: macro: Query.QueryExpr,
                 expr: macro {
-                    // TODO: find a nicer way to do this
-                    var q = db.Query.QueryExpr.QueryBinop(db.Query.QBinop.QOpAssign,db.Query.QueryExpr.QueryConstant(db.Query.QConstant.QIdent($v{primaryKeyFieldName})), db.Query.QueryExpr.QueryValue(primaryKey));
+                    var q = Query.query(Query.field($v{primaryKeyFieldName}) = primaryKey);
                     return q;
                 }
             }),
@@ -1001,8 +998,7 @@ class EntityBuilder {
                                     connect().then(success -> {
                                         return database.table($v{linkTableName});
                                     }).then(result -> {
-                                        // TODO: find a nicer way to do this
-                                        var q = db.Query.QueryExpr.QueryBinop(db.Query.QBinop.QOpAssign,db.Query.QueryExpr.QueryConstant(db.Query.QConstant.QIdent($v{linkField1})), db.Query.QueryExpr.QueryValue($i{primaryKeyFieldName}));
+                                        var q = Query.query(Query.field($v{linkField1}) = $i{primaryKeyFieldName});
                                         return result.table.find(q);
                                     }).then(result -> {
                                         var dbMap:Map<$resolvedPrimaryKeyType, Bool> = [];
@@ -1069,7 +1065,7 @@ class EntityBuilder {
                                                 connect().then(success -> {
                                                     return database.table(tableName);
                                                 }).then(result -> {
-                                                    var q = db.Query.QueryExpr.QueryBinop(db.Query.QBinop.QOpAssign, db.Query.QueryExpr.QueryConstant(db.Query.QConstant.QIdent($v{linkField1})), db.Query.QueryExpr.QueryBinop(db.Query.QBinop.QOpAssign, db.Query.QueryExpr.QueryBinop(db.Query.QBinop.QOpBoolAnd, db.Query.QueryExpr.QueryValue(key1), db.Query.QueryExpr.QueryConstant(db.Query.QConstant.QIdent($v{linkField2}))), db.Query.QueryExpr.QueryValue(key2)));
+                                                    var q = Query.query(Query.field($v{linkField1}) = key1 && Query.field($v{linkField2}) = key2);
                                                     return result.table.deleteAll(q);
                                                 }).then(result -> {
                                                     resolve(true);
@@ -1260,7 +1256,7 @@ class EntityBuilder {
                             var deleteLinkPromise = function(linkTable:String, linkField:String, linkValue:Any) {
                                 return new promises.Promise((resolve, reject) -> {
                                     database.table(linkTable).then(result -> {
-                                        var q = db.Query.QueryExpr.QueryBinop(db.Query.QBinop.QOpAssign,db.Query.QueryExpr.QueryConstant(db.Query.QConstant.QIdent(linkField)), db.Query.QueryExpr.QueryValue(linkValue));
+                                        var q = Query.query(linkField = linkValue);
                                         return result.table.deleteAll(q);
                                     }).then(result -> {
                                         resolve(true);
@@ -1272,7 +1268,7 @@ class EntityBuilder {
                             var nullifyOneToOnePromise = function(sourceTable:String, sourceField:String, sourceValue:Any) {
                                 return new promises.Promise((resolve, reject) -> {
                                     database.table(sourceTable).then(result -> {
-                                        var q = db.Query.QueryExpr.QueryBinop(db.Query.QBinop.QOpAssign,db.Query.QueryExpr.QueryConstant(db.Query.QConstant.QIdent(sourceField)), db.Query.QueryExpr.QueryValue(sourceValue));
+                                        var q = Query.query(sourceField = sourceValue);
                                         var record = new db.Record();
                                         record.empty(sourceField);
                                         return result.table.update(q, record);
@@ -1363,7 +1359,7 @@ class EntityBuilder {
             kind: FFun({
                 args: [{
                     name: "query",
-                    type: macro: db.Query.QueryExpr
+                    type: macro: Query.QueryExpr
                 }],
                 ret: macro: promises.Promise<Bool>,
                 expr: macro {
@@ -1400,7 +1396,7 @@ class EntityBuilder {
             kind: FFun({
                 args: [{
                     name: "query",
-                    type: macro: db.Query.QueryExpr,
+                    type: macro: Query.QueryExpr,
                     opt: true,
                     value: macro null
                 }],
@@ -1462,7 +1458,7 @@ class EntityBuilder {
             kind: FFun({
                 args: [{
                     name: "query",
-                    type: macro: db.Query.QueryExpr
+                    type: macro: Query.QueryExpr
                 }],
                 ret: macro: promises.Promise<$entityComplexType>,
                 expr: macro {
