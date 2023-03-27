@@ -1,7 +1,5 @@
 package cases.fakeorg;
 
-import haxe.Timer;
-import sys.FileSystem;
 import db.DatabaseFactory;
 import db.IDatabase;
 import entities.EntityManager;
@@ -36,7 +34,7 @@ class DBCreator {
                 this.db = db;
                 return db.connect();
             }).then(_ -> {
-                EntityManager.instance.db = db;
+                EntityManager.instance.database = db;
                 return createDummyData();
             }).then(_ -> {
                 resolve(true);                

@@ -10,6 +10,7 @@ class TestAll {
         var runner = new Runner();
         
         runner.addCase(new TestFakeOrgEntities());
+        runner.addCase(new TestBooks());
 
         Report.create(runner, SuccessResultsDisplayMode.AlwaysShowSuccessResults, HeaderDisplayMode.NeverShowHeader);
         runner.run();

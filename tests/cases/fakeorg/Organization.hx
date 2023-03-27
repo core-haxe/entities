@@ -1,6 +1,6 @@
 package cases.fakeorg;
 
-import db.Query;
+import Query;
 import entities.IEntity;
 import promises.Promise;
 
