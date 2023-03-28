@@ -1428,7 +1428,9 @@ class EntityBuilder {
                                 for (key in map.keys()) {
                                     var entity = new $entityClassType();
                                     entity.fromRecords(map.get(key), entity.definition().tableName);
-                                    array.push(entity);
+                                    if (@:privateAccess entity._hasData) {
+                                        array.push(entity);
+                                    }
                                 }
                             }
                             return null;
