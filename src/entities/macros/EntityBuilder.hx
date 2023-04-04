@@ -330,7 +330,10 @@ class EntityBuilder {
                     simpleExprs.push(macro var fieldName = $v{fieldName});
                     simpleExprs.push(macro if (fieldPrefix != null && fieldPrefix.length > 0) fieldName = fieldPrefix + "." + fieldName);
                     simpleExprs.push(macro var value = records[0].field(fieldName));
-                    simpleExprs.push(macro if (value != null) { this.$varName = value; this._hasData = true; });
+                    simpleExprs.push(macro if (value != null) {
+                        this.$varName = value;
+                        this._hasData = true;
+                    });
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     var varName = fieldDef.name;
                     var fieldName = fieldDef.name;
