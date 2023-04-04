@@ -269,6 +269,9 @@ class EntityBuilder {
         if (!hasPrimaryKey) {
             var exposeId:Bool = hasMeta(Context.getLocalClass().get().meta.get(), ":exposeId");
             var meta = [{name: ":primaryKey", pos: Context.currentPos()}, {name: ":increment", pos: Context.currentPos()}, {name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}];
+            if (exposeId) {
+                meta = [{name: ":primaryKey", pos: Context.currentPos()}, {name: ":increment", pos: Context.currentPos()}];                
+            }
             var access = [APrivate];
             if (exposeId) {
                 access = [APublic];
