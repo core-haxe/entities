@@ -287,6 +287,36 @@ class EntityBuilder {
             entityDefinition.primaryKeyFieldName = primaryKeyName;
             entityDefinition.primaryKeyFieldType = EntityFieldType.Number;
             entityDefinition.primarayKeyFieldAutoIncrement = true;
+            if (exposeId) {
+                var isJsonToObjectParsable = false;
+
+                // special case for exposeId and when the entity implements IJson2ObjectParsable
+                // the reason is that the primary key field might not have been created by the time
+                // the json2object macro has build its field data, this appends the newly created
+                // field to the parse method (may need revision)
+                for (i in Context.getLocalClass().get().interfaces) {
+                    if (i.t.toString() == "rest.IJson2ObjectParsable") {
+                        isJsonToObjectParsable = true;
+                        break;
+                    }
+                }
+                if (isJsonToObjectParsable) {
+                    for (field in fields) {
+                        if (field.name == "parse") {
+                            switch (field.kind) {
+                                case FFun(f):
+                                    switch (f.expr.expr) {
+                                        case EBlock(exprs): {
+                                            exprs.push(macro this.$primaryKeyName = data.$primaryKeyName);
+                                        }
+                                        case _:
+                                    }
+                                case _:   
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
