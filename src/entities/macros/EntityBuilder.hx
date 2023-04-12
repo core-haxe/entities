@@ -60,6 +60,7 @@ class EntityBuilder {
                                     case _:    
                                 }
                             }
+                            field.meta.push({name: ":optional", pos: Context.currentPos()});
                             switch (typeName) {
                                 case "Int":
                                     entityDefinition.fields.push({
@@ -123,7 +124,9 @@ class EntityBuilder {
             }
         }
 
-        buildConstructor(fields);
+        if (!hasMeta(localClass.meta.get(), ":structInit")) {
+            buildConstructor(fields);
+        }
         buildToRecord(entityDefinition, fields);
         buildFromRecords(entityDefinition, fields);
         buildTableSchema(entityDefinition, fields);
@@ -268,9 +271,9 @@ class EntityBuilder {
 
         if (!hasPrimaryKey) {
             var exposeId:Bool = hasMeta(Context.getLocalClass().get().meta.get(), ":exposeId");
-            var meta = [{name: ":primaryKey", pos: Context.currentPos()}, {name: ":increment", pos: Context.currentPos()}, {name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}];
+            var meta = [{name: ":primaryKey", pos: Context.currentPos()}, {name: ":increment", pos: Context.currentPos()}, {name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}, {name: ":optional", pos: Context.currentPos()}];
             if (exposeId) {
-                meta = [{name: ":primaryKey", pos: Context.currentPos()}, {name: ":increment", pos: Context.currentPos()}];                
+                meta = [{name: ":primaryKey", pos: Context.currentPos()}, {name: ":increment", pos: Context.currentPos()}, {name: ":optional", pos: Context.currentPos()}];                
             }
             var access = [APrivate];
             if (exposeId) {
@@ -375,10 +378,21 @@ class EntityBuilder {
                         pack: parts
                     };
 
+                    var classComplexType = TPath(classType);
+                    var resolvedType = Context.resolveType(classComplexType, Context.currentPos());
+                    var structInit = switch (resolvedType) {
+                        case TInst(resolvedInstance, params): hasMeta(resolvedInstance.get().meta.get(), ":structInit");
+                        case _: false; 
+                    }
+
                     var functionName = varName + "_deleted";
 
                     simpleExprs.push(macro if (this.$varName != null) @:privateAccess this.$varName.unregisterNotificationListener(entities.EntityNotificationType.Deleted, $i{functionName}));
-                    simpleExprs.push(macro this.$varName = new $classType());
+                    if (structInit) {
+                        simpleExprs.push(macro this.$varName = {});
+                    } else {
+                        simpleExprs.push(macro this.$varName = new $classType());
+                    }
                     simpleExprs.push(macro @:privateAccess this.$varName.fromRecords(records, fieldPrefix + "." + $v{table2}));
                     simpleExprs.push(macro if (@:privateAccess this.$varName._hasData == false) this.$varName = null; else this._hasData = true);
                     simpleExprs.push(macro if (this.$varName != null) @:privateAccess this.$varName.registerNotificationListener(entities.EntityNotificationType.Deleted, $i{functionName}));
@@ -465,7 +479,7 @@ class EntityBuilder {
             name: "_hasData",
             access: [APrivate],
             kind: FVar(macro: Bool, macro false),
-            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}],
+            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}, {name: ":optional", pos: Context.currentPos()}],
             pos: Context.currentPos()
         });
 
@@ -685,8 +699,8 @@ class EntityBuilder {
         fields.push({
             name: "database",
             access: [APrivate],
-            kind: FVar(macro: db.IDatabase),
-            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}],
+            kind: FVar(macro: db.IDatabase, macro null),
+            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}, {name: ":optional", pos: Context.currentPos()}],
             pos: Context.currentPos()
         });
     }
@@ -768,7 +782,7 @@ class EntityBuilder {
             name: "_notificationListeners",
             access: [APrivate],
             kind: FVar(macro: Map<entities.EntityNotificationType, Array<entities.IEntity->Void>>, macro []),
-            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}],
+            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}, {name: ":optional", pos: Context.currentPos()}],
             pos: Context.currentPos()
         });
 
@@ -1430,6 +1444,17 @@ class EntityBuilder {
         var entityComplexType = TPath(entityClassType);
         var primaryKeyFieldName = entityDefinition.primaryKeyFieldName;
         primaryKeyFieldName = entityDefinition.tableName + "." + primaryKeyFieldName;
+
+        var createEntityExpr = macro new $entityClassType();
+        var resolvedType = Context.resolveType(entityComplexType, Context.currentPos());
+        var structInit = switch (resolvedType) {
+            case TInst(resolvedInstance, params): hasMeta(resolvedInstance.get().meta.get(), ":structInit");
+            case _: false; 
+        }
+        if (structInit) {
+            createEntityExpr = macro {};
+        }
+
         fields.push({
             name: "all",
             access: [APublic, AStatic],
@@ -1443,7 +1468,7 @@ class EntityBuilder {
                 ret: macro: promises.Promise<Array<$entityComplexType>>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
-                        var entity = new $entityClassType();
+                        var entity:$entityComplexType = $createEntityExpr;
                         var array:Array<$entityComplexType> = [];
                         entity.connect().then(success -> {
                             return entity.database.table(entity.definition().tableName);
@@ -1462,7 +1487,7 @@ class EntityBuilder {
                                     list.push(record);
                                 }
                                 for (key in map.keys()) {
-                                    var entity = new $entityClassType();
+                                    var entity:$entityComplexType = $createEntityExpr;
                                     entity.fromRecords(map.get(key), entity.definition().tableName);
                                     if (@:privateAccess entity._hasData) {
                                         array.push(entity);
@@ -1483,6 +1508,9 @@ class EntityBuilder {
     }
 
     static function buildFind(entityClassType:TypePath, entityDefinition:EntityDefinition, fields:Array<Field>) {
+        var entityComplexType = TPath(entityClassType);
+        var primaryKeyFieldName = entityDefinition.primaryKeyFieldName;
+        
         var exprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
@@ -1492,8 +1520,16 @@ class EntityBuilder {
             }
         }
 
-        var entityComplexType = TPath(entityClassType);
-        var primaryKeyFieldName = entityDefinition.primaryKeyFieldName;
+        var createEntityExpr = macro new $entityClassType();
+        var resolvedType = Context.resolveType(entityComplexType, Context.currentPos());
+        var structInit = switch (resolvedType) {
+            case TInst(resolvedInstance, params): hasMeta(resolvedInstance.get().meta.get(), ":structInit");
+            case _: false; 
+        }
+        if (structInit) {
+            createEntityExpr = macro {};
+        }
+
         fields.push({
             name: "find",
             access: [APublic, AStatic],
@@ -1505,7 +1541,7 @@ class EntityBuilder {
                 ret: macro: promises.Promise<$entityComplexType>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
-                        var entity = new $entityClassType();
+                        var entity:$entityComplexType = $createEntityExpr;
                         entity.connect().then(success -> {
                             return entity.database.table(entity.definition().tableName);
                         }).then(result -> {
