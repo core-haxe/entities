@@ -38,7 +38,7 @@ class TestBasic extends Test {
             Assert.equals(1111, basic.intField);
             Assert.equals(2222.3333, basic.floatField);
             Assert.equals("this is a string", basic.stringField);
-            Assert.equals(1234, basic.dateField.getFullYear());
+            Assert.equals(2001, basic.dateField.getFullYear());
             Assert.equals(5, basic.dateField.getMonth());
             Assert.equals(6, basic.dateField.getDate());
             Assert.equals(17, basic.dateField.getHours());
