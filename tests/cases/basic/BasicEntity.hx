@@ -7,4 +7,5 @@ class BasicEntity implements IEntity {
     public var intField:Int;
     public var floatField:Float;
     public var stringField:String;    
+    public var dateField:Date;
 }

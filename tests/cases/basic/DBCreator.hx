@@ -51,6 +51,7 @@ class DBCreator {
             basicEntity.intField = 1111;
             basicEntity.floatField = 2222.3333;
             basicEntity.stringField = "this is a string";
+            basicEntity.dateField = new Date(1234, 5, 6, 17, 8, 9);
             list.push(basicEntity.add);
 
             PromiseUtils.runSequentially(list).then(result -> {

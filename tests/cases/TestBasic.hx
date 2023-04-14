@@ -32,12 +32,18 @@ class TestBasic extends Test {
         async.done();
     }
 
-    function testBasic(async:Async) {
+    function testBasicTypes(async:Async) {
         BasicEntity.findById(1).then(basic -> {
             Assert.equals(true, basic.boolField);
             Assert.equals(1111, basic.intField);
             Assert.equals(2222.3333, basic.floatField);
             Assert.equals("this is a string", basic.stringField);
+            Assert.equals(1234, basic.dateField.getFullYear());
+            Assert.equals(5, basic.dateField.getMonth());
+            Assert.equals(6, basic.dateField.getDate());
+            Assert.equals(17, basic.dateField.getHours());
+            Assert.equals(8, basic.dateField.getMinutes());
+            Assert.equals(9, basic.dateField.getSeconds());
             async.done();
         }, error -> {
             trace(error);

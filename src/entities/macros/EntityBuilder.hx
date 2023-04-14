@@ -86,6 +86,12 @@ class EntityBuilder {
                                         options: fieldOptions,
                                         type: EntityFieldType.Text
                                     });
+                                case "Date":
+                                    entityDefinition.fields.push({
+                                        name: fieldName,
+                                        options: fieldOptions,
+                                        type: EntityFieldType.Date
+                                    });
                                 case "Array":
                                     var resolvedType = Context.resolveType(t, Context.currentPos());
                                     switch (resolvedType) {
@@ -337,6 +343,8 @@ class EntityBuilder {
                     exprs.push(macro record.field($v{fieldDef.name}, $i{fieldDef.name} == true ? 1 : 0));
                 case EntityFieldType.Number | EntityFieldType.Text:
                     exprs.push(macro record.field($v{fieldDef.name}, $i{fieldDef.name}));
+                case EntityFieldType.Date:
+                    exprs.push(macro record.field($v{fieldDef.name}, entities.EntityUtils.dateToIso8601($i{fieldDef.name})));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro @:privateAccess if ($i{fieldDef.name} != null) record.field($v{field1}, $i{fieldDef.name}.$field2) );
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
@@ -364,10 +372,10 @@ class EntityBuilder {
         var loopExprs:Array<Expr> = [];
         
         for (fieldDef in entityDefinition.fields) {
+            var varName = fieldDef.name;
+            var fieldName = fieldDef.name;
             switch (fieldDef.type) {
                 case EntityFieldType.Boolean:
-                    var varName = fieldDef.name;
-                    var fieldName = fieldDef.name;
                     simpleExprs.push(macro var fieldName = $v{fieldName});
                     simpleExprs.push(macro if (fieldPrefix != null && fieldPrefix.length > 0) fieldName = fieldPrefix + "." + fieldName);
                     simpleExprs.push(macro var value = records[0].field(fieldName));
@@ -376,8 +384,6 @@ class EntityBuilder {
                         this._hasData = true;
                     });
                 case EntityFieldType.Number | EntityFieldType.Text:
-                    var varName = fieldDef.name;
-                    var fieldName = fieldDef.name;
                     simpleExprs.push(macro var fieldName = $v{fieldName});
                     simpleExprs.push(macro if (fieldPrefix != null && fieldPrefix.length > 0) fieldName = fieldPrefix + "." + fieldName);
                     simpleExprs.push(macro var value = records[0].field(fieldName));
@@ -385,10 +391,15 @@ class EntityBuilder {
                         this.$varName = value;
                         this._hasData = true;
                     });
+                case EntityFieldType.Date:    
+                    simpleExprs.push(macro var fieldName = $v{fieldName});
+                    simpleExprs.push(macro if (fieldPrefix != null && fieldPrefix.length > 0) fieldName = fieldPrefix + "." + fieldName);
+                    simpleExprs.push(macro var value = records[0].field(fieldName));
+                    simpleExprs.push(macro if (value != null) {
+                        this.$varName = entities.EntityUtils.iso8601ToDate(value);
+                        this._hasData = true;
+                    });
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
-                    var varName = fieldDef.name;
-                    var fieldName = fieldDef.name;
-
                     var parts = className.split(".");
                     var name = parts.pop();
                     var classType = {
@@ -533,7 +544,7 @@ class EntityBuilder {
         var linkExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
+                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date:
                     exprs.push(macro schema.columns.push({
                         name: $v{fieldDef.name},
                         type: $v{entityFieldTypeToColumnType(fieldDef.type)},
@@ -598,13 +609,13 @@ class EntityBuilder {
         var linkExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     var parts = className.split(".");
                     exprs.push(macro list.push(@:privateAccess $p{parts}.CheckTables));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
                     var parts = className.split(".");
                     exprs.push(macro list.push(@:privateAccess $p{parts}.CheckTables));
+                case _:    
             }
         }
 
@@ -915,7 +926,6 @@ class EntityBuilder {
         
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro if ($i{fieldDef.name} != null) list.push(@:privateAccess $i{fieldDef.name}.add));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
@@ -938,6 +948,7 @@ class EntityBuilder {
                         }
                     });
                     linkExprs.push(macro list.push(addLinks.bind($v{linkTableName}, linkRecords)));
+                case _:    
             }
         }
 
@@ -1027,7 +1038,6 @@ class EntityBuilder {
         var updateLinksExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro if ($i{fieldDef.name} != null) list.push(@:privateAccess $i{fieldDef.name}.update));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
@@ -1181,6 +1191,7 @@ class EntityBuilder {
                         pos: Context.currentPos()
                     });
                     updateLinksExprs.push(macro list.push($i{functionName}));
+                case _:    
             }
         }
 
@@ -1258,7 +1269,6 @@ class EntityBuilder {
         var linkExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     if (fieldDef.options.contains(EntityFieldOption.CascadeDeletions)) {
                         exprs.push(macro if ($i{fieldDef.name} != null) list.push($i{fieldDef.name}.delete));
@@ -1304,6 +1314,7 @@ class EntityBuilder {
                         });
                         exprs.push(macro list.push($i{functionName}));
                     }
+                    case _:
                 }
         }
 
@@ -1532,7 +1543,7 @@ class EntityBuilder {
         var exprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
+                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
             }
@@ -1645,6 +1656,8 @@ class EntityBuilder {
                 ColumnType.Number;
             case EntityFieldType.Text:
                 ColumnType.Memo;
+            case EntityFieldType.Date:
+                ColumnType.Text(27);
             case _:    
                 null;
         }
