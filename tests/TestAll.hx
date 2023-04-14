@@ -9,6 +9,7 @@ class TestAll {
     public static function main() {
         var runner = new Runner();
         
+        runner.addCase(new TestBasic());
         runner.addCase(new TestFakeOrgEntities());
         runner.addCase(new TestBooks());
 
