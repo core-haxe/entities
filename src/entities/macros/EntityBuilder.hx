@@ -62,6 +62,12 @@ class EntityBuilder {
                             }
                             field.meta.push({name: ":optional", pos: Context.currentPos()});
                             switch (typeName) {
+                                case "Bool":
+                                    entityDefinition.fields.push({
+                                        name: fieldName,
+                                        options: fieldOptions,
+                                        type: EntityFieldType.Boolean
+                                    });
                                 case "Int":
                                     entityDefinition.fields.push({
                                         name: fieldName,
@@ -327,6 +333,8 @@ class EntityBuilder {
         var exprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
+                case EntityFieldType.Boolean:
+                    exprs.push(macro record.field($v{fieldDef.name}, $i{fieldDef.name} == true ? 1 : 0));
                 case EntityFieldType.Number | EntityFieldType.Text:
                     exprs.push(macro record.field($v{fieldDef.name}, $i{fieldDef.name}));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
@@ -357,6 +365,16 @@ class EntityBuilder {
         
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
+                case EntityFieldType.Boolean:
+                    var varName = fieldDef.name;
+                    var fieldName = fieldDef.name;
+                    simpleExprs.push(macro var fieldName = $v{fieldName});
+                    simpleExprs.push(macro if (fieldPrefix != null && fieldPrefix.length > 0) fieldName = fieldPrefix + "." + fieldName);
+                    simpleExprs.push(macro var value = records[0].field(fieldName));
+                    simpleExprs.push(macro if (value != null) {
+                        this.$varName = (value == 1) ? true : false;
+                        this._hasData = true;
+                    });
                 case EntityFieldType.Number | EntityFieldType.Text:
                     var varName = fieldDef.name;
                     var fieldName = fieldDef.name;
@@ -515,7 +533,7 @@ class EntityBuilder {
         var linkExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text:
+                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
                     exprs.push(macro schema.columns.push({
                         name: $v{fieldDef.name},
                         type: $v{entityFieldTypeToColumnType(fieldDef.type)},
@@ -580,7 +598,7 @@ class EntityBuilder {
         var linkExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text:
+                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     var parts = className.split(".");
                     exprs.push(macro list.push(@:privateAccess $p{parts}.CheckTables));
@@ -897,7 +915,7 @@ class EntityBuilder {
         
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text:
+                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro if ($i{fieldDef.name} != null) list.push(@:privateAccess $i{fieldDef.name}.add));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
@@ -1009,7 +1027,7 @@ class EntityBuilder {
         var updateLinksExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text:
+                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro if ($i{fieldDef.name} != null) list.push(@:privateAccess $i{fieldDef.name}.update));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
@@ -1240,7 +1258,7 @@ class EntityBuilder {
         var linkExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text:
+                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     if (fieldDef.options.contains(EntityFieldOption.CascadeDeletions)) {
                         exprs.push(macro if ($i{fieldDef.name} != null) list.push($i{fieldDef.name}.delete));
@@ -1514,7 +1532,7 @@ class EntityBuilder {
         var exprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text:
+                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
             }
@@ -1621,6 +1639,8 @@ class EntityBuilder {
 
     static function entityFieldTypeToColumnType(entityType:EntityFieldType):ColumnType {
         return switch (entityType) {
+            case EntityFieldType.Boolean:
+                ColumnType.Number;
             case EntityFieldType.Number:
                 ColumnType.Number;
             case EntityFieldType.Text:

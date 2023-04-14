@@ -32,8 +32,9 @@ class TestBasic extends Test {
         async.done();
     }
 
-    function testString(async:Async) {
+    function testBasic(async:Async) {
         BasicEntity.findById(1).then(basic -> {
+            Assert.equals(true, basic.boolField);
             Assert.equals(1111, basic.intField);
             Assert.equals(2222.3333, basic.floatField);
             Assert.equals("this is a string", basic.stringField);

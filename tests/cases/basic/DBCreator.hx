@@ -47,6 +47,7 @@ class DBCreator {
             var list = [];
 
             var basicEntity = new BasicEntity();
+            basicEntity.boolField = true;
             basicEntity.intField = 1111;
             basicEntity.floatField = 2222.3333;
             basicEntity.stringField = "this is a string";
