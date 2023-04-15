@@ -1,5 +1,6 @@
 package cases.basic;
 
+import haxe.io.Bytes;
 import entities.IEntity;
 
 class BasicEntity implements IEntity {
@@ -8,4 +9,5 @@ class BasicEntity implements IEntity {
     public var floatField:Float;
     public var stringField:String;    
     public var dateField:Date;
+    public var bytesField:Bytes;
 }

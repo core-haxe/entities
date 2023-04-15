@@ -114,17 +114,25 @@ class EntityBuilder {
                                     var resolvedType = Context.resolveType(t, Context.currentPos());
                                     switch (resolvedType) {
                                         case TInst(resolvedInstance, params):
-                                            var isEntity = false;
-                                            for (i in resolvedInstance.get().interfaces) {
-                                                if (i.t.toString() == "entities.IEntity") {
-                                                    isEntity = true;
-                                                    break;
-                                                }
-                                            }
-                                            if (isEntity) {
-                                                buildOneToOneField(field, t, entityDefinition, fields);
+                                            if (resolvedInstance.toString() == "haxe.io.Bytes") {
+                                                entityDefinition.fields.push({
+                                                    name: fieldName,
+                                                    options: fieldOptions,
+                                                    type: EntityFieldType.Binary
+                                                });
                                             } else {
-                                                Sys.println("    - field '" + field.name + "' not entity, skipping");
+                                                var isEntity = false;
+                                                for (i in resolvedInstance.get().interfaces) {
+                                                    if (i.t.toString() == "entities.IEntity") {
+                                                        isEntity = true;
+                                                        break;
+                                                    }
+                                                }
+                                                if (isEntity) {
+                                                    buildOneToOneField(field, t, entityDefinition, fields);
+                                                } else {
+                                                    Sys.println("    - field '" + field.name + "' not entity, skipping");
+                                                }
                                             }
                                         case _:
                                             Sys.println("    - type '" + p.name + "' not supported for field '" + field.name + "', skipping");
@@ -345,6 +353,8 @@ class EntityBuilder {
                     exprs.push(macro record.field($v{fieldDef.name}, $i{fieldDef.name}));
                 case EntityFieldType.Date:
                     exprs.push(macro record.field($v{fieldDef.name}, entities.EntityUtils.dateToIso8601($i{fieldDef.name})));
+                case EntityFieldType.Binary:
+                    exprs.push(macro record.field($v{fieldDef.name}, $i{fieldDef.name}));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro @:privateAccess if ($i{fieldDef.name} != null) record.field($v{field1}, $i{fieldDef.name}.$field2) );
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
@@ -397,6 +407,14 @@ class EntityBuilder {
                     simpleExprs.push(macro var value = records[0].field(fieldName));
                     simpleExprs.push(macro if (value != null) {
                         this.$varName = entities.EntityUtils.iso8601ToDate(value);
+                        this._hasData = true;
+                    });
+                case EntityFieldType.Binary:    
+                    simpleExprs.push(macro var fieldName = $v{fieldName});
+                    simpleExprs.push(macro if (fieldPrefix != null && fieldPrefix.length > 0) fieldName = fieldPrefix + "." + fieldName);
+                    simpleExprs.push(macro var value = records[0].field(fieldName));
+                    simpleExprs.push(macro if (value != null) {
+                        this.$varName = value;
                         this._hasData = true;
                     });
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
@@ -544,7 +562,7 @@ class EntityBuilder {
         var linkExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date:
+                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date | EntityFieldType.Binary:
                     exprs.push(macro schema.columns.push({
                         name: $v{fieldDef.name},
                         type: $v{entityFieldTypeToColumnType(fieldDef.type)},
@@ -1543,7 +1561,7 @@ class EntityBuilder {
         var exprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date:
+                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date | EntityFieldType.Binary:
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
             }
@@ -1658,6 +1676,8 @@ class EntityBuilder {
                 ColumnType.Memo;
             case EntityFieldType.Date:
                 ColumnType.Text(27);
+            case EntityFieldType.Binary:
+                ColumnType.Binary;
             case _:    
                 null;
         }

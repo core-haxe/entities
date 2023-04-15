@@ -1,5 +1,6 @@
 package cases.fakeorg;
 
+import haxe.io.Bytes;
 import db.DatabaseFactory;
 import db.IDatabase;
 import entities.EntityManager;
@@ -56,7 +57,7 @@ class DBCreator {
             var hooli = organization("Hooli", ["2624 Mill Street", "ABC XYZ"], sharedIcon);
             var massive = organization("Massive Dynamic", ["137 Tillman Station", "O'Fallon", "Connecticut", "MSV 001"]);
 
-            var ian = worker("ian_harrigan", ["52", "Some street", "Sliema", "SLM 001"], [acme, globex, hooli, massive]);
+            var ian = worker("ian_harrigan", ["52", "Some street", "Sliema", "SLM 001"], [acme, globex, hooli, massive], Bytes.ofString("this is ians contract document"));
             var bob = worker("bob_barker", ["POBOX 15", "112 335"], [globex, initech]);
             var tim = worker("tim_taylor", ["49 Foo Lane", "Theresville", "Someplace", "SMP 485"], [acme, initech]);
             var jim = worker("jim_jefferies", ["Nowhere avenue", "Moresville", "MOR 762"], [massive]);
@@ -79,7 +80,7 @@ class DBCreator {
         });
     }
 
-    private function worker(username:String, addressLines:Array<String>, orgs:Array<Organization>):Worker {
+    private function worker(username:String, addressLines:Array<String>, orgs:Array<Organization>, contractDocument:Bytes = null):Worker {
         var work = new Worker();
         work.username = username;
         work.address = address(addressLines);
@@ -87,6 +88,7 @@ class DBCreator {
         icon.path = "/icons/users/" + username.toLowerCase().replace(" ", "_") + ".png";
         work.icon = icon;
         work.organizations = orgs;
+        work.contractDocument = contractDocument;
         return work;
     }
 

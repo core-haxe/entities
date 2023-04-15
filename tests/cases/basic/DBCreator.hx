@@ -1,5 +1,6 @@
 package cases.basic;
 
+import haxe.io.Bytes;
 import promises.PromiseUtils;
 import entities.EntityManager;
 import db.DatabaseFactory;
@@ -52,6 +53,7 @@ class DBCreator {
             basicEntity.floatField = 2222.3333;
             basicEntity.stringField = "this is a string";
             basicEntity.dateField = new Date(2001, 5, 6, 17, 8, 9);
+            basicEntity.bytesField = Bytes.ofString("these are bytes");
             list.push(basicEntity.add);
 
             PromiseUtils.runSequentially(list).then(result -> {

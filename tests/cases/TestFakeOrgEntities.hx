@@ -1,5 +1,6 @@
 package cases;
 
+import haxe.io.Bytes;
 import cases.fakeorg.AddressLine;
 import cases.fakeorg.Organization;
 import cases.fakeorg.Icon;
@@ -39,6 +40,7 @@ class TestFakeOrgEntities extends Test {
     function testBasicWorker(async:Async) {
         Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
+            Assert.equals(Bytes.ofString("this is ians contract document").toString(), worker.contractDocument.toString());
             Assert.equals("/icons/users/ian_harrigan.png", worker.icon.path);
             // address
             Assert.equals(3, worker.address.lines.length);

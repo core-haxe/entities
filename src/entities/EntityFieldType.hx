@@ -5,5 +5,6 @@ enum EntityFieldType {
     Number;
     Text;
     Date;
+    Binary;
     Class(className:String, relationship:EntityFieldRelationship, type:EntityFieldType);
 }
