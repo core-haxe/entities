@@ -56,7 +56,9 @@ class TestBasic extends Test {
     }
 
     function testBasicUpdateTypes(async:Async) {
+        var basicRef:BasicEntity = null;
         BasicEntity.findById(1).then(basic -> {
+            basicRef = basic;
             Assert.equals(true, basic.boolField);
             Assert.equals(1111, basic.intField);
             Assert.equals(2222.3333, basic.floatField);
@@ -81,7 +83,7 @@ class TestBasic extends Test {
 
             return basic.update();
         }).then(success -> {
-            return BasicEntity.findById(1); // lets requery just to make sure
+            return basicRef.refresh(); // lets refresh just to make sure
         }).then(basic -> {
             Assert.equals(false, basic.boolField);
             Assert.equals(2222, basic.intField);

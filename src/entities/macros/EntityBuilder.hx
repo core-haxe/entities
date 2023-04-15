@@ -163,6 +163,7 @@ class EntityBuilder {
         buildFind(entityClassType, entityDefinition, fields);
         buildFindById(entityClassType, entityDefinition, fields);
         buildFindInternal(entityClassType, entityDefinition, fields);
+        buildRefresh(entityClassType, entityDefinition, fields);
         buildAll(entityClassType, entityDefinition, fields);
         
         return fields;
@@ -1446,6 +1447,35 @@ class EntityBuilder {
                         }
                     }
                     return list;
+                }
+            }),
+            pos: Context.currentPos()
+        });
+    }
+
+    static function buildRefresh(entityClassType:TypePath, entityDefinition:EntityDefinition, fields:Array<Field>) {
+        var entityComplexType = TPath(entityClassType);
+        var primaryKeyFieldName = entityDefinition.primaryKeyFieldName;
+        
+        fields.push({
+            name: "refresh",
+            access: [APublic],
+            kind: FFun({
+                args: [],
+                ret: macro: promises.Promise<$entityComplexType>,
+                expr: macro {
+                    return new promises.Promise((resolve, reject) -> {
+                        var id = this.$primaryKeyFieldName;
+                        findInternal(primaryKeyQuery(id)).then(success -> {
+                            if (success) {
+                                resolve(this);
+                            } else {
+                                resolve(null);
+                            }
+                        }, error -> {
+                            reject(error);
+                        });
+                    });
                 }
             }),
             pos: Context.currentPos()
