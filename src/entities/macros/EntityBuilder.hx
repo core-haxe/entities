@@ -481,12 +481,21 @@ class EntityBuilder {
                         name: name,
                         pack: parts
                     };
-
+                    var classComplexType = TPath(classType);
+                    var resolvedType = Context.resolveType(classComplexType, Context.currentPos());
+                    var structInit = switch (resolvedType) {
+                        case TInst(resolvedInstance, params): hasMeta(resolvedInstance.get().meta.get(), ":structInit");
+                        case _: false; 
+                    }
+                    var createEntityExpr = macro new $classType();
+                    if (structInit) {
+                        createEntityExpr = macro {};
+                    }
 
                     loopExprs.push(macro var tempId = record.field(fieldPrefix + "." + $v{linkTableName} + "." + $v{table2} + "." + $v{field2}));
                     loopExprs.push(macro var cacheKey = $v{varName} + "_" + tempId);
                     loopExprs.push(macro if (!cacheMap.exists(cacheKey)) {
-                        var item = new $classType();
+                        var item:$classComplexType = $createEntityExpr;
                         var filteredRecords = records.filter(item -> {
                             return tempId == item.field(fieldPrefix + "." + $v{linkTableName} + "." + $v{table2} + "." + $v{field2});
                         });
