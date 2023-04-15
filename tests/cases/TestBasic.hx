@@ -56,9 +56,7 @@ class TestBasic extends Test {
     }
 
     function testBasicUpdateTypes(async:Async) {
-        var basicRef:BasicEntity = null;
         BasicEntity.findById(1).then(basic -> {
-            basicRef = basic;
             Assert.equals(true, basic.boolField);
             Assert.equals(1111, basic.intField);
             Assert.equals(2222.3333, basic.floatField);
@@ -82,8 +80,23 @@ class TestBasic extends Test {
             basic.bytesField = Bytes.ofString("these are updated bytes");
 
             return basic.update();
-        }).then(success -> {
-            return basicRef.refresh(); // lets refresh just to make sure
+        }).then(basic -> {
+            Assert.equals(false, basic.boolField);
+            Assert.equals(2222, basic.intField);
+            Assert.equals(3333.4444, basic.floatField);
+            Assert.equals("this is an updated string", basic.stringField);
+            Assert.equals(2002, basic.dateField.getFullYear());
+            Assert.equals(6, basic.dateField.getMonth());
+            Assert.equals(7, basic.dateField.getDate());
+            Assert.equals(18, basic.dateField.getHours());
+            Assert.equals(9, basic.dateField.getMinutes());
+            Assert.equals(10, basic.dateField.getSeconds());
+            #if !neko
+            Assert.isOfType(basic.bytesField, Bytes);
+            Assert.equals(Bytes.ofString("these are updated bytes").toString(), basic.bytesField.toString());
+            #end
+
+            return basic.refresh(); // lets refresh just to make sure
         }).then(basic -> {
             Assert.equals(false, basic.boolField);
             Assert.equals(2222, basic.intField);

@@ -47,7 +47,7 @@ class DBCreator {
 
     public function createDummyData() {
         return new Promise((resolve, reject) -> {
-            var list = [];
+            var list:Array<() -> promises.Promise<Any>> = [];
 
             var sharedIcon = icon("/icons/orgs/shared_icon.png");
 

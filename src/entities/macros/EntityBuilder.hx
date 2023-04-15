@@ -155,9 +155,9 @@ class EntityBuilder {
         buildNotifiers(entityDefinition, fields);
 
         buildExists(entityDefinition, fields);
-        buildAdd(entityDefinition, fields);
-        buildUpdate(entityDefinition, fields);
-        buildDelete(entityDefinition, fields);
+        buildAdd(entityClassType, entityDefinition, fields);
+        buildUpdate(entityClassType, entityDefinition, fields);
+        buildDelete(entityClassType, entityDefinition, fields);
         buildFind(entityClassType, entityDefinition, fields);
         buildFindById(entityClassType, entityDefinition, fields);
         buildFindInternal(entityClassType, entityDefinition, fields);
@@ -648,7 +648,7 @@ class EntityBuilder {
                         CheckTableSchema(TableSchema()).then(result -> {
                             return CheckLinkTables();
                         }).then(entity -> {
-                            var list = [];
+                            var list:Array<() -> promises.Promise<Any>> = [];
                             $b{exprs};
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(entity -> {
@@ -671,7 +671,7 @@ class EntityBuilder {
                 ret: macro: promises.Promise<Bool>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
-                        var list = [];
+                        var list:Array<() -> promises.Promise<Any>> = [];
                         var linkSchemas = LinkTableSchemas();
                         if (linkSchemas != null) {
                             for (k in linkSchemas.keys()) {
@@ -937,7 +937,9 @@ class EntityBuilder {
         });
     }
 
-    static function buildAdd(entityDefinition:EntityDefinition, fields:Array<Field>) {
+    static function buildAdd(entityClassType:TypePath, entityDefinition:EntityDefinition, fields:Array<Field>) {
+        var entityComplexType = TPath(entityClassType);
+
         var exprs:Array<Expr> = [];
         var linkExprs:Array<Expr> = [];
         
@@ -984,11 +986,11 @@ class EntityBuilder {
             access: [APublic],
             kind: FFun({
                 args: [],
-                ret: macro: promises.Promise<Bool>,
+                ret: macro: promises.Promise<$entityComplexType>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
                         connect().then(success -> {
-                            var list = [];
+                            var list:Array<() -> promises.Promise<Any>> = [];
                             $b{exprs};
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(result -> {
@@ -1003,14 +1005,14 @@ class EntityBuilder {
                                 }
                             });
                         }).then(result -> {
-                            var list = [];
+                            var list:Array<() -> promises.Promise<Any>> = [];
                             if (result != null) {
                                 $e{assignmentExpr};
                                 $b{linkExprs};
                             }
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(result -> {
-                            resolve(true);
+                            resolve(this);
                         }, error -> {
                             reject(error);
                         });
@@ -1032,7 +1034,7 @@ class EntityBuilder {
                         connect().then(success -> {
                             return database.table(tableName);
                         }).then(result -> {
-                            var list = [];
+                            var list:Array<() -> promises.Promise<Any>> = [];
                             for (record in records) {
                                 list.push(result.table.add.bind(record));
                             }
@@ -1049,8 +1051,10 @@ class EntityBuilder {
         });
     }
 
-    static function buildUpdate(entityDefinition:EntityDefinition, fields:Array<Field>) {
+    static function buildUpdate(entityClassType:TypePath, entityDefinition:EntityDefinition, fields:Array<Field>) {
+        var entityComplexType = TPath(entityClassType);
         var primaryKeyFieldName = entityDefinition.primaryKeyFieldName;
+
         var exprs:Array<Expr> = [];
         var updateLinksExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
@@ -1174,7 +1178,7 @@ class EntityBuilder {
                                             });
                                         }
 
-                                        var list = [];
+                                        var list:Array<() -> promises.Promise<Any>> = [];
                                         for (creation in creations) {
                                             list.push(createPromise.bind(creation));
                                         }
@@ -1217,11 +1221,11 @@ class EntityBuilder {
             access: [APublic],
             kind: FFun({
                 args: [],
-                ret: macro: promises.Promise<Bool>,
+                ret: macro: promises.Promise<$entityComplexType>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
                         connect().then(success -> {
-                            var list = [];
+                            var list:Array<() -> promises.Promise<Any>> = [];
                             $b{exprs};
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(result -> {
@@ -1232,7 +1236,7 @@ class EntityBuilder {
                                     return new promises.Promise((resolve, reject) -> {
                                         var record = this.toRecord();
                                         result.table.update(primaryKeyQuery(record.field($v{primaryKeyFieldName})), record).then(result -> {
-                                            resolve(true);
+                                            resolve(this);
                                         }, error -> {
                                             reject(error);
                                         });
@@ -1244,7 +1248,7 @@ class EntityBuilder {
                         }).then(result -> {
                             return updateLinks();
                         }).then(result -> {
-                            resolve(true);
+                            resolve(this);
                         }, error -> {
                             reject(error);
                         });
@@ -1264,7 +1268,7 @@ class EntityBuilder {
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
                         connect().then(success -> {
-                            var list = [];
+                            var list:Array<() -> promises.Promise<Any>> = [];
                             $b{updateLinksExprs};
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(result -> {
@@ -1279,7 +1283,8 @@ class EntityBuilder {
         });
     }
 
-    static function buildDelete(entityDefinition:EntityDefinition, fields:Array<Field>) {
+    static function buildDelete(entityClassType:TypePath, entityDefinition:EntityDefinition, fields:Array<Field>) {
+        var entityComplexType = TPath(entityClassType);
         var primaryKeyFieldName = entityDefinition.primaryKeyFieldName;
         
         var exprs:Array<Expr> = [];
@@ -1304,23 +1309,23 @@ class EntityBuilder {
                             meta: [{name: ":noCompletion", pos: Context.currentPos()}],
                             kind: FFun({
                                 args: [],
-                                ret: macro: promises.Promise<Bool>,
+                                ret: macro: promises.Promise<$entityComplexType>,
                                 expr: macro {
                                     return new promises.Promise((resolve, reject) -> {
-                                        var list = [];
+                                        var list:Array<() -> promises.Promise<Any>> = [];
                                         for (item in this.$fieldName) {
                                             list.push(item.delete);
                                         }
                                         promises.PromiseUtils.runSequentially(list).then(result -> {
                                             var deletePromise = function() {
                                                 return new promises.Promise((resolve, reject) -> {
-                                                    resolve(true);
+                                                    resolve(this);
                                                 });
                                             }
-                                            var list = [];
+                                            var list:Array<() -> promises.Promise<Any>> = [];
                                             return promises.PromiseUtils.runSequentially(list);
                                         }).then(result -> {
-                                            resolve(true);
+                                            resolve(this);
                                         }, error -> {
                                             reject(error);
                                         });
@@ -1348,11 +1353,11 @@ class EntityBuilder {
                         }).then(result -> {
                             return result.table.deleteAll(primaryKeyQuery(this.$primaryKeyFieldName));
                         }).then(result -> {
-                            var list = [];
+                            var list:Array<() -> promises.Promise<Any>> = [];
                             $b{exprs};
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(result -> {
-                            var list = [];
+                            var list:Array<() -> promises.Promise<Any>> = [];
                             var deleteLinkPromise = function(linkTable:String, linkField:String, linkValue:Any) {
                                 return new promises.Promise((resolve, reject) -> {
                                     database.table(linkTable).then(result -> {

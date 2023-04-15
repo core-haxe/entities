@@ -44,7 +44,7 @@ class DBCreator {
 
     public function createDummyData() {
         return new Promise((resolve, reject) -> {
-            var list = [];
+            var list:Array<() -> promises.Promise<Any>> = [];
 
             var Marijn_Haverbeke = author("Marijn", "Haverbeke");
             var Nicolas_Bevacqua = author("Nicolás", "Bevacqua");
