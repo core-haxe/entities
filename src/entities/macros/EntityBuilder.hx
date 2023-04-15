@@ -113,26 +113,24 @@ class EntityBuilder {
                                 case _:
                                     var resolvedType = Context.resolveType(t, Context.currentPos());
                                     switch (resolvedType) {
+                                        case TInst(_.toString() => "haxe.io.Bytes",_):
+                                            entityDefinition.fields.push({
+                                                name: fieldName,
+                                                options: fieldOptions,
+                                                type: EntityFieldType.Binary
+                                            });
                                         case TInst(resolvedInstance, params):
-                                            if (resolvedInstance.toString() == "haxe.io.Bytes") {
-                                                entityDefinition.fields.push({
-                                                    name: fieldName,
-                                                    options: fieldOptions,
-                                                    type: EntityFieldType.Binary
-                                                });
+                                            var isEntity = false;
+                                            for (i in resolvedInstance.get().interfaces) {
+                                                if (i.t.toString() == "entities.IEntity") {
+                                                    isEntity = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (isEntity) {
+                                                buildOneToOneField(field, t, entityDefinition, fields);
                                             } else {
-                                                var isEntity = false;
-                                                for (i in resolvedInstance.get().interfaces) {
-                                                    if (i.t.toString() == "entities.IEntity") {
-                                                        isEntity = true;
-                                                        break;
-                                                    }
-                                                }
-                                                if (isEntity) {
-                                                    buildOneToOneField(field, t, entityDefinition, fields);
-                                                } else {
-                                                    Sys.println("    - field '" + field.name + "' not entity, skipping");
-                                                }
+                                                Sys.println("    - field '" + field.name + "' not entity, skipping");
                                             }
                                         case _:
                                             Sys.println("    - type '" + p.name + "' not supported for field '" + field.name + "', skipping");
