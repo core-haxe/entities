@@ -655,6 +655,11 @@ class EntityBuilder {
                 ret: macro: promises.Promise<Bool>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
+                        if (_checkingTables) {
+                            _deferredCheckTablesPromises.push({resolve: resolve, reject: reject});
+                            return;
+                        }
+                        _checkingTables = true;
                         CheckTableSchema(TableSchema()).then(result -> {
                             return CheckLinkTables();
                         }).then(entity -> {
@@ -663,8 +668,17 @@ class EntityBuilder {
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(entity -> {
                             resolve(true);
+                            while (_deferredCheckTablesPromises.length > 0) {
+                                _deferredCheckTablesPromises.pop().resolve(true);
+                            }
+                            _checkingTables = false;
+                            return null;
                         }, error -> {
                             reject(error);
+                            while (_deferredCheckTablesPromises.length > 0) {
+                                _deferredCheckTablesPromises.pop().reject(error);
+                            }
+                            _checkingTables = false;
                         });
                     });
                 }
@@ -724,6 +738,22 @@ class EntityBuilder {
                     });
                 }
             }),
+            pos: Context.currentPos()
+        });
+
+        fields.push({
+            name: "_checkingTables",
+            access: [APrivate, AStatic],
+            kind: FVar(macro: Bool, macro false),
+            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}, {name: ":optional", pos: Context.currentPos()}],
+            pos: Context.currentPos()
+        });
+
+        fields.push({
+            name: "_deferredCheckTablesPromises",
+            access: [APrivate, AStatic],
+            kind: FVar(macro: Array<{resolve: Bool->Void, reject: Any->Void}>, macro []),
+            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}, {name: ":optional", pos: Context.currentPos()}],
             pos: Context.currentPos()
         });
     }

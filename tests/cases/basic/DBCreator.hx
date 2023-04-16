@@ -23,7 +23,7 @@ class DBCreator {
         });
     }
     
-    public function create() {
+    public function create(createData:Bool = true) {
         return new Promise((resolve, reject) -> {
             clear().then(_ -> {
                 File.saveContent(filename, "");
@@ -34,7 +34,10 @@ class DBCreator {
                 return db.connect();
             }).then(_ -> {
                 EntityManager.instance.database = db;
-                return createDummyData();
+                if (createData) {
+                    return createDummyData();
+                }
+                return null;
             }).then(_ -> {
                 resolve(true);                
             }, error -> {
