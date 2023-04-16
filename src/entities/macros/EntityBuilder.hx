@@ -109,6 +109,7 @@ class EntityBuilder {
                                                 Sys.println("    - field '" + field.name + "' not entity, skipping");
                                             }
                                         case _:
+                                            Sys.println("    - array field not supported for field '" + field.name + "', skipping");
                                     }            
                                 case _:
                                     var resolvedType = Context.resolveType(t, Context.currentPos());
