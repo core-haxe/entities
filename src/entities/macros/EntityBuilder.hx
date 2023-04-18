@@ -1596,10 +1596,10 @@ class EntityBuilder {
                             return result.table.find(query);
                         }).then(result -> {
                             if (result.data != null || result.data.length != 0) {
-                                var map:Map<Any, Array<db.Record>> = [];
-                                var mapKeys:Array<Any> = [];
+                                var map:Map<String, Array<db.Record>> = [];
+                                var mapKeys:Array<String> = [];
                                 for (record in result.data) {
-                                    var fieldValue = record.field($v{primaryKeyFieldName});
+                                    var fieldValue = Std.string(record.field($v{primaryKeyFieldName}));
                                     var list = map.get(fieldValue);
                                     if (list == null) {
                                         list = [];
