@@ -1597,16 +1597,18 @@ class EntityBuilder {
                         }).then(result -> {
                             if (result.data != null || result.data.length != 0) {
                                 var map:Map<Any, Array<db.Record>> = [];
+                                var mapKeys:Array<Any> = [];
                                 for (record in result.data) {
                                     var fieldValue = record.field($v{primaryKeyFieldName});
                                     var list = map.get(fieldValue);
                                     if (list == null) {
                                         list = [];
                                         map.set(fieldValue, list);
+                                        mapKeys.push(fieldValue);
                                     }
                                     list.push(record);
                                 }
-                                for (key in map.keys()) {
+                                for (key in mapKeys) {
                                     var entity:$entityComplexType = $createEntityExpr;
                                     entity.fromRecords(map.get(key), entity.definition().tableName);
                                     if (@:privateAccess entity._hasData) {
