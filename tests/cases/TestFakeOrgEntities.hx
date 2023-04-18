@@ -506,10 +506,47 @@ class TestFakeOrgEntities extends Test {
     function testDateQuery(async:Async) {
         var date1 = new Date(2000, 0, 1, 0, 0, 0);
         var date2 = new Date(2010, 11, 31, 0, 0, 0);
-        Worker.findByStartDates(date1, date2).then(workers -> { // find "ian"
+        Worker.findByStartDates(date1, date2).then(workers -> {
             Assert.equals(2, workers.length);
             Assert.equals("ian_harrigan", workers[0].username);
             Assert.equals("jim_jefferies", workers[1].username);
+            async.done();
+        }, error -> {
+            trace(error);
+        });
+    }
+
+    // note the order here is the order they were added to the db
+    // which is why "shared" images appear in (seemingly) "random" indexes
+    function testImages(async:Async) {
+        Worker.findById(1).then(worker -> { // find "ian"
+            Assert.equals("ian_harrigan", worker.username);
+            Assert.equals(6, worker.images.length);
+            Assert.equals("/images/ian/ian_001.jpg", worker.images[0].path);
+            Assert.equals("/images/ian/ian_002.jpg", worker.images[1].path);
+            Assert.equals("/images/ian/ian_003.jpg", worker.images[2].path);
+            Assert.equals("/images/shared/shared_001.jpg", worker.images[3].path);
+            Assert.equals("/images/shared/shared_002.jpg", worker.images[4].path);
+            Assert.equals("/images/shared/shared_003.jpg", worker.images[5].path);
+            return Worker.findById(2); // find "bob"
+        }).then(worker -> {
+            Assert.equals("bob_barker", worker.username);
+            Assert.equals(4, worker.images.length);
+            Assert.equals("/images/shared/shared_003.jpg", worker.images[0].path);
+            Assert.equals("/images/bob/bob_001.jpg", worker.images[1].path);
+            Assert.equals("/images/bob/bob_002.jpg", worker.images[2].path);
+            Assert.equals("/images/shared/shared_004.jpg", worker.images[3].path);
+            return Worker.findById(3); // find "tim"
+        }).then(worker -> {
+            Assert.equals("tim_taylor", worker.username);
+            Assert.equals(0, worker.images.length);
+            return Worker.findById(4); // find "jim"
+        }).then(worker -> {
+            Assert.equals("jim_jefferies", worker.username);
+            Assert.equals("/images/shared/shared_001.jpg", worker.images[0].path);
+            Assert.equals("/images/shared/shared_004.jpg", worker.images[1].path);
+            Assert.equals("/images/jim/jim_001.jpg", worker.images[2].path);
+            Assert.equals(3, worker.images.length);
             async.done();
         }, error -> {
             trace(error);
