@@ -1,5 +1,7 @@
 package cases.fakeorg;
 
+import Query;
+import promises.Promise;
 import haxe.io.Bytes;
 import entities.IEntity;
 
@@ -10,4 +12,9 @@ class Worker implements IEntity {
     public var icon:Icon;
     public var organizations:Array<Organization>;
     public var contractDocument:Bytes;
+    public var startDate:Date;
+
+    public static function findByStartDates(start:Date, end:Date):Promise<Array<Worker>> {
+        return Worker.all(Query.query($startDate >= start && $startDate <= end));
+    }
 }

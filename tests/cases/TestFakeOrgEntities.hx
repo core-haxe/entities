@@ -311,7 +311,7 @@ class TestFakeOrgEntities extends Test {
 
     function testAddUserAddressLine(async:Async) {
         var theWorker = null;
-        return Worker.findById(1).then(worker -> { // find "ian"
+        Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
             theWorker = worker;
 
@@ -386,7 +386,7 @@ class TestFakeOrgEntities extends Test {
 
     function testAddAndRemoveUserAddressLine(async:Async) {
         var theWorker = null;
-        return Worker.findById(1).then(worker -> {  // find "ian"
+        Worker.findById(1).then(worker -> {  // find "ian"
             Assert.equals("ian_harrigan", worker.username);
             theWorker = worker;
 
@@ -480,7 +480,7 @@ class TestFakeOrgEntities extends Test {
 
     function testRemoveUserAddress(async:Async) {
         var theWorker = null;
-        return Worker.findById(1).then(worker -> { // find "ian"
+        Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
             theWorker = worker;
 
@@ -497,6 +497,19 @@ class TestFakeOrgEntities extends Test {
         }).then(worker -> {
             Assert.equals(null, worker.address);
 
+            async.done();
+        }, error -> {
+            trace(error);
+        });
+    }
+
+    function testDateQuery(async:Async) {
+        var date1 = new Date(2000, 0, 1, 0, 0, 0);
+        var date2 = new Date(2010, 11, 31, 0, 0, 0);
+        Worker.findByStartDates(date1, date2).then(workers -> { // find "ian"
+            Assert.equals(2, workers.length);
+            Assert.equals("ian_harrigan", workers[0].username);
+            Assert.equals("jim_jefferies", workers[1].username);
             async.done();
         }, error -> {
             trace(error);

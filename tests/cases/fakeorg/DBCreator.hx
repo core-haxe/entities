@@ -57,10 +57,10 @@ class DBCreator {
             var hooli = organization("Hooli", ["2624 Mill Street", "ABC XYZ"], sharedIcon);
             var massive = organization("Massive Dynamic", ["137 Tillman Station", "O'Fallon", "Connecticut", "MSV 001"]);
 
-            var ian = worker("ian_harrigan", ["52", "Some street", "Sliema", "SLM 001"], [acme, globex, hooli, massive], Bytes.ofString("this is ians contract document"));
-            var bob = worker("bob_barker", ["POBOX 15", "112 335"], [globex, initech]);
-            var tim = worker("tim_taylor", ["49 Foo Lane", "Theresville", "Someplace", "SMP 485"], [acme, initech]);
-            var jim = worker("jim_jefferies", ["Nowhere avenue", "Moresville", "MOR 762"], [massive]);
+            var ian = worker("ian_harrigan", ["52", "Some street", "Sliema", "SLM 001"], [acme, globex, hooli, massive], new Date(2000, 11, 14, 0, 0, 0), Bytes.ofString("this is ians contract document"));
+            var bob = worker("bob_barker", ["POBOX 15", "112 335"], [globex, initech], new Date(2020, 8, 4, 0, 0, 0));
+            var tim = worker("tim_taylor", ["49 Foo Lane", "Theresville", "Someplace", "SMP 485"], [acme, initech], new Date(1990, 3, 25, 0, 0, 0));
+            var jim = worker("jim_jefferies", ["Nowhere avenue", "Moresville", "MOR 762"], [massive], new Date(2010, 6, 18, 0, 0, 0));
 
             list.push(acme.add);
             list.push(globex.add);
@@ -80,7 +80,7 @@ class DBCreator {
         });
     }
 
-    private function worker(username:String, addressLines:Array<String>, orgs:Array<Organization>, contractDocument:Bytes = null):Worker {
+    private function worker(username:String, addressLines:Array<String>, orgs:Array<Organization>, startDate:Date, contractDocument:Bytes = null):Worker {
         var work = new Worker();
         work.username = username;
         work.address = address(addressLines);
@@ -88,6 +88,7 @@ class DBCreator {
         icon.path = "/icons/users/" + username.toLowerCase().replace(" ", "_") + ".png";
         work.icon = icon;
         work.organizations = orgs;
+        work.startDate = startDate;
         work.contractDocument = contractDocument;
         return work;
     }
