@@ -1409,12 +1409,15 @@ class EntityBuilder {
                                         }
                                         return promises.PromiseUtils.runSequentially(list);
                                     }).then(result -> {
+                                        /*
                                         findInternal(primaryKeyQuery(this.$primaryKeyFieldName)).then(result -> {
                                             resolve(true);
                                         }, error -> {
                                             reject(error);
                                             return null;
                                         });
+                                        */
+                                        resolve(true);
                                     }, error -> {
                                         reject(error);
                                     });
