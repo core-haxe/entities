@@ -67,6 +67,7 @@ class DBCreator {
             basicEntity.arrayOfNullBools = [true, null, false];
             basicEntity.arrayOfDates = [new Date(2011, 1, 2, 3, 4, 5), new Date(2012, 4, 5, 6, 7, 8), new Date(2013, 7, 8, 9, 10, 11)];
             basicEntity.arrayOfBytes = [Bytes.ofString("bytes 1"), Bytes.ofString("bytes 2"), Bytes.ofString("bytes 3")];
+            basicEntity.structInitEntityArray = [{}];
             */
             list.push(basicEntity.add);
 
