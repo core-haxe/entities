@@ -570,18 +570,24 @@ class EntityBuilder {
                     }
 
                     loopExprs.push(macro var tempId = record.field(fieldPrefix + "." + $v{linkTableName} + "." + $v{table2} + "." + $v{field2}));
-                    loopExprs.push(macro var cacheKey = $v{varName} + "_" + tempId);
-                    loopExprs.push(macro if (!cacheMap.exists(cacheKey)) {
-                        var item:$classComplexType = $createEntityExpr;
-                        var filteredRecords = records.filter(item -> {
-                            return tempId == item.field(fieldPrefix + "." + $v{linkTableName} + "." + $v{table2} + "." + $v{field2});
-                        });
-                        @:privateAccess item.fromRecords(filteredRecords, fieldPrefix + "." + $v{linkTableName} + "." + $v{table2});
-                        if (@:privateAccess item._hasData == true) {
-                            this.$varName.push(item);
-                            cacheMap.set(cacheKey, true);
-                            this._hasData = true;
-                            @:privateAccess item.registerNotificationListener(entities.EntityNotificationType.Deleted, $i{functionName});
+                    loopExprs.push(macro if (tempId != null) {
+                        var cacheKey = $v{varName} + "_" + tempId;
+                        if (!cacheMap.exists(cacheKey)) {
+                            var item:$classComplexType = $createEntityExpr;
+                            var filteredRecords = records.filter(item -> {
+                                var recordId = item.field(fieldPrefix + "." + $v{linkTableName} + "." + $v{table2} + "." + $v{field2});
+                                if (recordId == null) {
+                                    return false;
+                                }
+                                return tempId == recordId;
+                            });
+                            @:privateAccess item.fromRecords(filteredRecords, fieldPrefix + "." + $v{linkTableName} + "." + $v{table2});
+                            if (@:privateAccess item._hasData == true) {
+                                this.$varName.push(item);
+                                cacheMap.set(cacheKey, true);
+                                this._hasData = true;
+                                @:privateAccess item.registerNotificationListener(entities.EntityNotificationType.Deleted, $i{functionName});
+                            }
                         }
                     });
 
