@@ -12,7 +12,7 @@ import utest.Test;
 import utest.Async;
 
 @:timeout(2000)
-class TestFakeOrgEntities extends Test {
+class TestFakeOrgEntities extends TestBase {
 
     function setupClass() {
         logging.LogManager.instance.addAdaptor(new logging.adaptors.ConsoleLogAdaptor({
@@ -38,6 +38,7 @@ class TestFakeOrgEntities extends Test {
     }
 
     function testBasicWorker(async:Async) {
+        start("TestFakeOrgEntities.testBasicWorker");
         Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
             Assert.equals(Bytes.ofString("this is ians contract document").toString(), worker.contractDocument.toString());
@@ -128,6 +129,8 @@ class TestFakeOrgEntities extends Test {
             Assert.equals("O'Fallon", worker.organizations[0].address.lines[1].text);
             Assert.equals("Connecticut", worker.organizations[0].address.lines[2].text);
             Assert.equals("MSV 001", worker.organizations[0].address.postCode);
+
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -135,6 +138,7 @@ class TestFakeOrgEntities extends Test {
     }
 
     function testBasicUpdate(async:Async) {
+        start("TestFakeOrgEntities.testBasicUpdate");
         var theWorker = null;
         Worker.findById(1).then(worker -> { // find "ian"
             theWorker = worker;
@@ -163,6 +167,7 @@ class TestFakeOrgEntities extends Test {
             Assert.equals("Some street", theWorker.address.lines[1].text);
             Assert.equals("NEW LINE 222", theWorker.address.lines[2].text);
             Assert.equals("SLM 001 - edited", theWorker.address.postCode);
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -171,6 +176,7 @@ class TestFakeOrgEntities extends Test {
 
     function testSharedIconUpdate(async:Async) {
         var theIcon = null;
+        start("TestFakeOrgEntities.testSharedIconUpdate");
         Icon.findById(2).then(icon -> { // find "/icons/orgs/shared_icon.png"
             theIcon = icon;
             Assert.equals("/icons/orgs/shared_icon.png", theIcon.path);
@@ -187,6 +193,7 @@ class TestFakeOrgEntities extends Test {
         }).then(org -> {
             Assert.equals("Hooli", org.name);
             Assert.equals("this_is_a_new_shared_icon.png", org.icon.path);
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -194,6 +201,7 @@ class TestFakeOrgEntities extends Test {
     }
 
     function testSharedOrganizationUpdate(async:Async) {
+        start("TestFakeOrgEntities.testSharedOrganizationUpdate");
         Organization.findById(1).then(org -> { // find "ACME"
             Assert.equals("ACME", org.name);
             Assert.equals("ACM ARZ", org.address.postCode);
@@ -255,6 +263,7 @@ class TestFakeOrgEntities extends Test {
             // Massive Dynamic
             Assert.equals("Massive Dynamic - edited 3", worker.organizations[0].name);
             Assert.equals("NEW MASSIVE DYNAMIC POSTCODE", worker.organizations[0].address.postCode);
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -263,6 +272,7 @@ class TestFakeOrgEntities extends Test {
 
     function testChangeUserIconThatExists(async:Async) {
         var theWorker = null;
+        start("TestFakeOrgEntities.testChangeUserIconThatExists");
         Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
             Assert.equals("/icons/users/ian_harrigan.png", worker.icon.path);
@@ -279,6 +289,7 @@ class TestFakeOrgEntities extends Test {
         }).then(worker -> {
             Assert.equals("ian_harrigan", worker.username);
             Assert.equals("/icons/users/jim_jefferies.png", worker.icon.path);
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -286,6 +297,7 @@ class TestFakeOrgEntities extends Test {
     }
 
     function testChangeUserIconToNewIcon(async:Async) {
+        start("TestFakeOrgEntities.testChangeUserIconToNewIcon");
         var theWorker = null;
         Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
@@ -303,6 +315,7 @@ class TestFakeOrgEntities extends Test {
         }).then(worker -> {
             Assert.equals("ian_harrigan", worker.username);
             Assert.equals("new_icon.png", worker.icon.path);
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -310,6 +323,7 @@ class TestFakeOrgEntities extends Test {
     }
 
     function testAddUserAddressLine(async:Async) {
+        start("TestFakeOrgEntities.testAddUserAddressLine");
         var theWorker = null;
         Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
@@ -343,6 +357,7 @@ class TestFakeOrgEntities extends Test {
             Assert.equals("this is a new address line", worker.address.lines[3].text);
             Assert.equals("SLM 001", worker.address.postCode);
 
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -351,6 +366,7 @@ class TestFakeOrgEntities extends Test {
 
     function testRemoveUserAddressLine(async:Async) {
         var theWorker = null;
+        start("TestFakeOrgEntities.testRemoveUserAddressLine");
         Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
             theWorker = worker;
@@ -378,6 +394,7 @@ class TestFakeOrgEntities extends Test {
             Assert.equals("Sliema", worker.address.lines[1].text);
             Assert.equals("SLM 001", worker.address.postCode);
 
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -386,6 +403,7 @@ class TestFakeOrgEntities extends Test {
 
     function testAddAndRemoveUserAddressLine(async:Async) {
         var theWorker = null;
+        start("TestFakeOrgEntities.testAddAndRemoveUserAddressLine");
         Worker.findById(1).then(worker -> {  // find "ian"
             Assert.equals("ian_harrigan", worker.username);
             theWorker = worker;
@@ -419,6 +437,7 @@ class TestFakeOrgEntities extends Test {
             Assert.equals("this is a new address line", worker.address.lines[2].text);
             Assert.equals("SLM 001", worker.address.postCode);
 
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -427,6 +446,7 @@ class TestFakeOrgEntities extends Test {
 
     function testAddThreeAndRemoveTwoUserAddressLines(async:Async) {
         var theWorker = null;
+        start("TestFakeOrgEntities.testAddThreeAndRemoveTwoUserAddressLines");
         Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
             theWorker = worker;
@@ -472,6 +492,7 @@ class TestFakeOrgEntities extends Test {
             Assert.equals("this is a new address line #3", worker.address.lines[3].text);
             Assert.equals("SLM 001", worker.address.postCode);
 
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -479,6 +500,7 @@ class TestFakeOrgEntities extends Test {
     }
 
     function testRemoveUserAddress(async:Async) {
+        start("TestFakeOrgEntities.testRemoveUserAddress");
         var theWorker = null;
         Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
@@ -497,6 +519,7 @@ class TestFakeOrgEntities extends Test {
         }).then(worker -> {
             Assert.equals(null, worker.address);
 
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -504,12 +527,15 @@ class TestFakeOrgEntities extends Test {
     }
 
     function testDateQuery(async:Async) {
+        start("TestFakeOrgEntities.testDateQuery");
+
         var date1 = new Date(2000, 0, 1, 0, 0, 0);
         var date2 = new Date(2010, 11, 31, 0, 0, 0);
         Worker.findByStartDates(date1, date2).then(workers -> {
             Assert.equals(2, workers.length);
             Assert.equals("ian_harrigan", workers[0].username);
             Assert.equals("jim_jefferies", workers[1].username);
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -519,6 +545,7 @@ class TestFakeOrgEntities extends Test {
     // note the order here is the order they were added to the db
     // which is why "shared" images appear in (seemingly) "random" indexes
     function testImages(async:Async) {
+        start("TestFakeOrgEntities.testImages");
         Worker.findById(1).then(worker -> { // find "ian"
             Assert.equals("ian_harrigan", worker.username);
 
@@ -576,6 +603,7 @@ class TestFakeOrgEntities extends Test {
             Assert.equals("/images/shared/shared_thumb_004.jpg", worker.thumbs[1].path);
             Assert.equals("/images/jim/jim_thumb_001.jpg", worker.thumbs[2].path);
 
+            complete();
             async.done();
         }, error -> {
             trace(error);

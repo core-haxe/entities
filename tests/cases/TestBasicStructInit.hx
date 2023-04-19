@@ -8,7 +8,7 @@ import utest.Async;
 import utest.Test;
 
 @:timeout(2000)
-class TestBasicStructInit extends Test {
+class TestBasicStructInit extends TestBase {
     function setupClass() {
         logging.LogManager.instance.addAdaptor(new logging.adaptors.ConsoleLogAdaptor({
             levels: [logging.LogLevel.Info, logging.LogLevel.Error]

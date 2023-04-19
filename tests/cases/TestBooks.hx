@@ -7,7 +7,7 @@ import utest.Test;
 import cases.books.DBCreator;
 
 @:timeout(2000)
-class TestBooks extends Test {
+class TestBooks extends TestBase {
 
     function setupClass() {
         logging.LogManager.instance.addAdaptor(new logging.adaptors.ConsoleLogAdaptor({
