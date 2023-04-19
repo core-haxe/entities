@@ -106,10 +106,25 @@ class EntityBuilder {
                                             if (isEntity) {
                                                 buildOneToManyField(field, t, entityDefinition, fields);
                                             } else {
-                                                Sys.println("    - field '" + field.name + "' not entity, skipping");
+                                                var typeName = resolvedInstance.toString();
+                                                buildPrimitiveArrayField(field, typeName, entityDefinition);
                                             }
+                                        case TInst(_, [TAbstract(resolvedInstance, params)]):  
+                                            var abstractType = resolvedInstance.get();
+                                            var typeName = resolvedInstance.toString();
+                                            if (typeName == "Null" && params.length == 1) {
+                                                switch (params[0]) {
+                                                    case TAbstract(underlyingType, _):
+                                                        typeName = underlyingType.toString();
+                                                    case TInst(underlyingType, _):
+                                                        typeName = underlyingType.toString();
+                                                    case _:    
+                                                }
+                                            }
+                                            buildPrimitiveArrayField(field, typeName, entityDefinition);
                                         case _:
-                                            Sys.println("    - array field not supported for field '" + field.name + "', skipping");
+                                            trace(resolvedType);
+                                            Sys.println("    - array field '" + field.name + "' not entity or supported primitive, skipping");
                                     }            
                                 case _:
                                     var resolvedType = Context.resolveType(t, Context.currentPos());
@@ -170,6 +185,22 @@ class EntityBuilder {
 
     #if macro
 
+    static function buildPrimitiveArrayField(field:Field, typeName:String, entityDefinition:EntityDefinition) {
+        var entityFieldType = haxeTypeStringToEntityFieldType(typeName, EntityFieldType.Unknown);
+        if (entityFieldType == EntityFieldType.Unknown) {
+            Sys.println("    - array field '" + field.name + "' is of an unsupported type (" + typeName + ")");
+        } else {
+            var fieldOptions = [];
+            entityDefinition.fields.push({
+                name: field.name,
+                options: fieldOptions,
+                type: EntityFieldType.Array(entityFieldType)
+            });
+            var linkTableName = entityDefinition.tableName + "_" + field.name.toLowerCase();
+            defineTableRelationship(entityDefinition.tableName + "." + entityDefinition.primaryKeyFieldName, linkTableName + "." + entityDefinition.primaryKeyFieldName);
+        }
+    }
+
     static function buildOneToManyField(field:Field, type:ComplexType, entityDefinition:EntityDefinition, fields:Array<Field>) {
         var localClass = Context.getLocalClass().get();
 
@@ -189,7 +220,6 @@ class EntityBuilder {
                 for (resolvedField in resolvedInstance.get().fields.get()) {
                     if (hasMeta(resolvedField.meta.get(), ":primaryKey")) {
                         var resolvedFieldType = TypeTools.toComplexType(resolvedField.type);
-                        // TODO: might want to prefix the field with resolvedTableName var so we can have multiple instance of the same type
                         var resolvedFieldName = resolvedField.name;
                         primaryFieldName = resolvedFieldName;
                         entityDefinition.fields.push({
@@ -355,9 +385,12 @@ class EntityBuilder {
                     exprs.push(macro record.field($v{fieldDef.name}, entities.EntityUtils.dateToIso8601($i{fieldDef.name})));
                 case EntityFieldType.Binary:
                     exprs.push(macro record.field($v{fieldDef.name}, $i{fieldDef.name}));
+                case EntityFieldType.Array(entityFieldType):
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro @:privateAccess if ($i{fieldDef.name} != null) record.field($v{field1}, $i{fieldDef.name}.$field2) );
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
+                case EntityFieldType.Unknown:
+                    Sys.println("    - field '" + fieldDef.name + "' is of unknown type");
             }
         }
         fields.push({
@@ -380,6 +413,7 @@ class EntityBuilder {
     static function buildFromRecords(entityDefinition:EntityDefinition, fields:Array<Field>) {
         var simpleExprs:Array<Expr> = [];
         var loopExprs:Array<Expr> = [];
+        var postLoopExprs:Array<Expr> = [];
         
         for (fieldDef in entityDefinition.fields) {
             var varName = fieldDef.name;
@@ -416,6 +450,48 @@ class EntityBuilder {
                     simpleExprs.push(macro if (value != null) {
                         this.$varName = value;
                         this._hasData = true;
+                    });
+                case EntityFieldType.Array(entityFieldType):
+                    var linkTableName = entityDefinition.tableName + "_" + fieldName.toLowerCase();
+                    var primaryKeyFieldName = entityDefinition.primaryKeyFieldName;
+
+                    var pushValueExpr = macro {value: value, valueId: valueId};
+                    switch (entityFieldType) {
+                        case EntityFieldType.Date:
+                            pushValueExpr = macro {value: entities.EntityUtils.iso8601ToDate(value), valueId: valueId};
+                        case _:    
+                    }
+                    loopExprs.push(macro var tempId = record.field(fieldPrefix + "." + $v{linkTableName} + "." + $v{entityDefinition.primaryKeyFieldName}));
+                    loopExprs.push(macro if (this.$primaryKeyFieldName == tempId) {
+                        var valueId = record.field(fieldPrefix + "." + $v{linkTableName} + "." + "valueId");
+                        var value = record.field(fieldPrefix + "." + $v{linkTableName} + "." + "value");
+                        var primitiveArrayItemCache = primitiveArrayCacheMap.get($v{fieldName});
+                        if (primitiveArrayItemCache == null) {
+                            primitiveArrayItemCache = [];
+                            primitiveArrayCacheMap.set($v{fieldName}, primitiveArrayItemCache);
+                        }
+                        if (!primitiveArrayItemCache.exists(Std.string(valueId))) {
+                            primitiveArrayItemCache.set(Std.string(valueId), true);
+                            // were going to put it in a cached list so we'll maintain order (based on valueId - auto incrementing field)
+                            var valueList = primitiveArrayValueMap.get($v{fieldName});
+                            if (valueList == null) {
+                                valueList = [];
+                                primitiveArrayValueMap.set($v{fieldName}, valueList);
+                            }
+                            valueList.push($pushValueExpr);
+                        }
+                    });
+
+                    postLoopExprs.push(macro var valueList = primitiveArrayValueMap.get($v{fieldName}));
+                    postLoopExprs.push(macro this.$fieldName = []);
+                    postLoopExprs.push(macro if (valueList != null && valueList.length > 0) {
+                        this._hasData = true;
+                        valueList.sort((v1, v2) -> {
+                            return v1.valueId - v2.valueId;
+                        });
+                        for (v in valueList) {
+                            this.$fieldName.push(v.value);
+                        }
                     });
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     var parts = className.split(".");
@@ -528,6 +604,8 @@ class EntityBuilder {
                         }),
                         pos: Context.currentPos()
                     });
+                case EntityFieldType.Unknown:
+                    Sys.println("    - field '" + fieldDef.name + "' is of unknown type");
             }
         }
         
@@ -557,9 +635,12 @@ class EntityBuilder {
                     }
                     $b{simpleExprs}
                     var cacheMap:Map<String, Bool> = [];
+                    var primitiveArrayCacheMap:Map<String, Map<String, Bool>> = [];
+                    var primitiveArrayValueMap:Map<String, Array<{value: Any, valueId: Int}>> = [];
                     for (record in records) {
                         $b{loopExprs}
                     }
+                    $b{postLoopExprs}
                 }
             }),
             pos: Context.currentPos()
@@ -577,6 +658,16 @@ class EntityBuilder {
                         type: $v{entityFieldTypeToColumnType(fieldDef.type)},
                         options: $v{entityFieldOptionsToColumnOptions(fieldDef.options)}
                     }));
+                case EntityFieldType.Array(entityFieldType):
+                    var linkTableName = entityDefinition.tableName + "_" + fieldDef.name.toLowerCase();
+                    var linkField1 = entityDefinition.primaryKeyFieldName;
+                    var linkField2 = "value";
+                    linkExprs.push(macro if (map == null) map = []);
+                    linkExprs.push(macro var schema:db.TableSchema = {name: $v{linkTableName}, columns: []});
+                    linkExprs.push(macro schema.columns.push({name: $v{linkField1}, type: $v{entityFieldTypeToColumnType(entityDefinition.primaryKeyFieldType)}, options: []}));
+                    linkExprs.push(macro schema.columns.push({name: $v{linkField2}, type: $v{entityFieldTypeToColumnType(entityFieldType)}, options: []}));
+                    linkExprs.push(macro schema.columns.push({name: $v{linkField2} + "Id", type: db.ColumnType.Number, options: [db.ColumnOptions.AutoIncrement, db.ColumnOptions.PrimaryKey]}));
+                    linkExprs.push(macro map.set($v{linkTableName}, schema));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro schema.columns.push({
                         name: $v{field1},
@@ -592,6 +683,8 @@ class EntityBuilder {
                     linkExprs.push(macro schema.columns.push({name: $v{linkField1}, type: $v{entityFieldTypeToColumnType(type)}, options: []}));
                     linkExprs.push(macro schema.columns.push({name: $v{linkField2}, type: $v{entityFieldTypeToColumnType(type)}, options: []}));
                     linkExprs.push(macro map.set($v{linkTableName}, schema));
+                case EntityFieldType.Unknown:
+                    Sys.println("    - field '" + fieldDef.name + "' is of unknown type");
             }
         }
 
@@ -636,6 +729,8 @@ class EntityBuilder {
         var linkExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
+                case EntityFieldType.Array(entityFieldType):
+                    // TODO: ?
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     var parts = className.split(".");
                     exprs.push(macro list.push(@:privateAccess $p{parts}.CheckTables));
@@ -985,6 +1080,26 @@ class EntityBuilder {
         
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
+                case EntityFieldType.Array(entityFieldType):
+                    var linkTableName = entityDefinition.tableName + "_" + fieldDef.name.toLowerCase();
+                    var linkField1 = entityDefinition.primaryKeyFieldName;
+                    var linkField2 = "value";
+                    var fieldValueExpr = macro item;
+                    switch (entityFieldType) {
+                        case EntityFieldType.Date:
+                            fieldValueExpr = macro entities.EntityUtils.dateToIso8601(item);
+                        case _:
+                    }
+                    linkExprs.push(macro var itemRecords = []);
+                    linkExprs.push(macro if ($i{fieldDef.name} != null) {
+                        for (item in $i{fieldDef.name}) {
+                            var itemRecord = new db.Record();
+                            itemRecord.field($v{linkField1}, $i{entityDefinition.primaryKeyFieldName});
+                            itemRecord.field($v{linkField2}, $fieldValueExpr);
+                            itemRecords.push(itemRecord);
+                        }
+                    });
+                    linkExprs.push(macro list.push(addLinks.bind($v{linkTableName}, itemRecords)));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro if ($i{fieldDef.name} != null) list.push(@:privateAccess $i{fieldDef.name}.add));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
@@ -1096,9 +1211,61 @@ class EntityBuilder {
         var primaryKeyFieldName = entityDefinition.primaryKeyFieldName;
 
         var exprs:Array<Expr> = [];
+        var updateArrayExprs:Array<Expr> = [];
         var updateLinksExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
+                case EntityFieldType.Array(entityFieldType):
+                    var fieldName = fieldDef.name;
+                    var functionName = "update_" + fieldDef.name;
+                    var linkTableName = entityDefinition.tableName + "_" + fieldDef.name.toLowerCase();
+                    var linkField1 = entityDefinition.primaryKeyFieldName;
+                    var valueExpr = macro value;
+                    switch (entityFieldType) {
+                        case EntityFieldType.Date:
+                            valueExpr = macro entities.EntityUtils.dateToIso8601(value);
+                        case _:
+                    }
+                    fields.push({
+                        name: functionName,
+                        access: [APrivate],
+                        meta: [{name: ":noCompletion", pos: Context.currentPos()}],
+                        kind: FFun({
+                            args: [],
+                            ret: macro: promises.Promise<Bool>,
+                            expr: macro {
+                                return new promises.Promise((resolve, reject) -> {
+                                    var array = [];
+                                    connect().then(success -> {
+                                        return database.table($v{linkTableName});
+                                    }).then(result -> {
+
+                                        var list:Array<() -> promises.Promise<Any>> = [];
+                                        var q = Query.query(Query.field($v{linkField1}) = $i{primaryKeyFieldName});
+                                        list.push(result.table.deleteAll.bind(q));
+                                        var copy = this.$fieldName.copy();
+                                        this.$fieldName = [];
+                                        for (value in copy) {
+                                            var record = new db.Record();
+                                            record.field($v{primaryKeyFieldName}, $i{primaryKeyFieldName});
+                                            record.field("value", $valueExpr);
+                                            list.push(result.table.add.bind(record));
+                                            this.$fieldName.push(value);
+                                        }
+
+                                        return promises.PromiseUtils.runSequentially(list);
+                                    }).then(result -> {
+                                        resolve(true);
+                                    }, error -> {
+                                        reject(error);
+                                    });
+                                });
+                            }
+                        }),
+                        pos: Context.currentPos()
+                    });
+                    updateArrayExprs.push(macro list.push($i{functionName}));
+
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro if ($i{fieldDef.name} != null) list.push(@:privateAccess $i{fieldDef.name}.update));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
@@ -1234,7 +1401,6 @@ class EntityBuilder {
                                             var key2 = deletion;
                                             list.push(deletePromise.bind($v{linkTableName}, key1, key2));
                                         }
-
                                         return promises.PromiseUtils.runSequentially(list);
                                     }).then(result -> {
                                         findInternal(primaryKeyQuery(this.$primaryKeyFieldName)).then(result -> {
@@ -1309,6 +1475,10 @@ class EntityBuilder {
                     return new promises.Promise((resolve, reject) -> {
                         connect().then(success -> {
                             var list:Array<() -> promises.Promise<Any>> = [];
+                            $b{updateArrayExprs};
+                            return promises.PromiseUtils.runSequentially(list);
+                        }).then(result -> {
+                            var list:Array<() -> promises.Promise<Any>> = [];
                             $b{updateLinksExprs};
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(result -> {
@@ -1331,6 +1501,8 @@ class EntityBuilder {
         var linkExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
+                case EntityFieldType.Array(entityFieldType):
+                    exprs.push(macro trace("delete for primitive arrays not implemented (yet)"));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     if (fieldDef.options.contains(EntityFieldOption.CascadeDeletions)) {
                         exprs.push(macro if ($i{fieldDef.name} != null) list.push($i{fieldDef.name}.delete));
@@ -1637,8 +1809,11 @@ class EntityBuilder {
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
                 case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date | EntityFieldType.Binary:
+                case EntityFieldType.Array(entityFieldType):
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
+                case EntityFieldType.Unknown:
+                    Sys.println("    - field '" + fieldDef.name + "' is of unknown type");
             }
         }
 
@@ -1773,18 +1948,43 @@ class EntityBuilder {
         return columnOptions;
     }
 
-    static function haxeTypeToEntityFieldType(ct:ComplexType) {
+    static function haxeTypeToEntityFieldType(ct:ComplexType, defaultValue = EntityFieldType.Number) {
         switch (ct) {
             case TPath(p):
-                switch (p.name) {
-                    case "Int":
-                        return EntityFieldType.Number;
-                    case "String":
-                        return EntityFieldType.Text;
+                if (p.name == "StdTypes" && p.params.length == 1) {
+                    switch (p.params[0]) {
+                        case TPType(t):
+                            switch (t) {
+                                case TPath(p):
+                                    return haxeTypeStringToEntityFieldType(p.sub, defaultValue);
+                                case _:    
+                            }
+                        case _:    
+                    }
+                    return defaultValue;
                 }
+                return haxeTypeStringToEntityFieldType(p.name, defaultValue);
             case _:
         }
-        return EntityFieldType.Number;
+        return defaultValue;
+    }
+
+    static function haxeTypeStringToEntityFieldType(s:String, defaultValue = EntityFieldType.Number) {
+        switch (s) {
+            case "Bool":
+                return EntityFieldType.Number;
+            case "Int":
+                return EntityFieldType.Number;
+            case "Float":
+                return EntityFieldType.Number;
+            case "String":
+                return EntityFieldType.Text;
+            case "Date":
+                return EntityFieldType.Date;
+            case "haxe.io.Bytes":
+                return EntityFieldType.Binary;
+        }
+        return defaultValue;
     }
 
     static function defineTableRelationship(field1:String, field2:String) {
