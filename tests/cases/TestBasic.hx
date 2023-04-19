@@ -7,10 +7,9 @@ import utest.Assert;
 import entities.EntityManager;
 import cases.basic.DBCreator;
 import utest.Async;
-import utest.Test;
 
 @:timeout(20000)
-class TestBasic extends Test {
+class TestBasic extends TestBase {
     function setupClass() {
         logging.LogManager.instance.addAdaptor(new logging.adaptors.ConsoleLogAdaptor({
             levels: [logging.LogLevel.Info, logging.LogLevel.Error]
@@ -35,10 +34,10 @@ class TestBasic extends Test {
     }
 
     function testBasicTypes(async:Async) {
-        var start = Sys.time();
+        start("TestBasic.testBasicTypes");
 
         BasicEntity.findById(1).then(basic -> {
-            trace("got record in " + (Sys.time() - start) + "s");
+            check("got record");
             Assert.equals(true, basic.boolField);
             Assert.equals(1111, basic.intField);
             Assert.equals(2222.3333, basic.floatField);
@@ -130,7 +129,7 @@ class TestBasic extends Test {
             #end
             */
 
-            trace("test complete in " + (Sys.time() - start) + "s");
+            complete();
             async.done();
         }, error -> {
             trace(error);
@@ -139,9 +138,11 @@ class TestBasic extends Test {
     }
 
     function testBasicUpdateTypes(async:Async) {
-        var start = Sys.time();
+        start("TestBasic.testBasicUpdateTypes");
 
         BasicEntity.findById(1).then(basic -> {
+            check("got record");
+
             Assert.equals(true, basic.boolField);
             Assert.equals(1111, basic.intField);
             Assert.equals(2222.3333, basic.floatField);
@@ -184,6 +185,8 @@ class TestBasic extends Test {
 
             return basic.update();
         }).then(basic -> {
+            check("updated record");
+
             Assert.equals(false, basic.boolField);
             Assert.equals(2222, basic.intField);
             Assert.equals(3333.4444, basic.floatField);
@@ -241,6 +244,7 @@ class TestBasic extends Test {
 
             return basic.refresh(); // lets refresh just to make sure
         }).then(basic -> {
+            check("refreshed record");
             Assert.equals(false, basic.boolField);
             Assert.equals(2222, basic.intField);
             Assert.equals(3333.4444, basic.floatField);
@@ -296,7 +300,7 @@ class TestBasic extends Test {
             #end
             */
 
-            trace("test complete in " + (Sys.time() - start) + "s");
+            complete();
             async.done();
         }, error -> {
             trace(error);
