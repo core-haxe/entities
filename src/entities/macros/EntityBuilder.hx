@@ -181,7 +181,7 @@ class EntityBuilder {
 
                 var resolvedTableName = extractTableName(resolvedInstance.get());
                 var primaryFieldName = null;
-                var linkTableName = entityDefinition.tableName + "_" + resolvedTableName;
+                var linkTableName = entityDefinition.tableName + "_" + field.name.toLowerCase();
                 var fieldOptions = [];
                 if (hasMeta(field.meta, ":cascade")) {
                     fieldOptions.push(EntityFieldOption.CascadeDeletions);
@@ -242,7 +242,7 @@ class EntityBuilder {
     }
 
     static function extractTableName(classType:ClassType) {
-        var tableName = classType.name;
+        var tableName = classType.name.toLowerCase();
         var tableMeta = classType.meta.extract(":table");
         if (tableMeta != null && tableMeta.length > 0) {
             tableName = ExprTools.toString(tableMeta[0].params[0]);
@@ -466,7 +466,7 @@ class EntityBuilder {
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
                     var varName = fieldDef.name;
                     var fieldName = fieldDef.name;
-                    var linkTableName = table1 + "_" + table2;
+                    var linkTableName = table1 + "_" + fieldDef.name.toLowerCase();
 
                     var functionName = varName + "_item_deleted";
                     simpleExprs.push(macro if (this.$varName != null) {
@@ -584,7 +584,7 @@ class EntityBuilder {
                         options: []
                     }));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
-                    var linkTableName = table1 + "_" + table2;
+                    var linkTableName = table1 + "_" + fieldDef.name.toLowerCase();
                     var linkField1 = field1;
                     var linkField2 = field2;
                     linkExprs.push(macro if (map == null) map = []);
@@ -988,7 +988,7 @@ class EntityBuilder {
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                     exprs.push(macro if ($i{fieldDef.name} != null) list.push(@:privateAccess $i{fieldDef.name}.add));
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
-                    var linkTableName = table1 + "_" + table2;
+                    var linkTableName = table1 + "_" + fieldDef.name.toLowerCase();
                     var linkField1 = field1;
                     var linkField2 = field2;
 
@@ -1104,7 +1104,7 @@ class EntityBuilder {
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
                     var fieldName = fieldDef.name;
                     var functionName = "update_" + fieldDef.name;
-                    var linkTableName = table1 + "_" + table2;
+                    var linkTableName = table1 + "_" + fieldDef.name.toLowerCase();
                     var linkField1 = field1;
                     var linkField2 = field2;
                     

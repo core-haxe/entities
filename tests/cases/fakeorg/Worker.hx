@@ -14,6 +14,7 @@ class Worker implements IEntity {
     public var contractDocument:Bytes;
     public var startDate:Date;
     public var images:Array<Image>;
+    public var thumbs:Array<Image>;
 
     public static function findByStartDates(start:Date, end:Date):Promise<Array<Worker>> {
         return Worker.all(Query.query($startDate >= start && $startDate <= end));

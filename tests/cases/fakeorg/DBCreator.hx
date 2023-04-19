@@ -70,10 +70,10 @@ class DBCreator {
             var shared_image_02 = image("/images/shared/shared_002.jpg");
             var shared_image_03 = image("/images/shared/shared_003.jpg");
             var shared_image_04 = image("/images/shared/shared_004.jpg");
-            var shared_thumb_01 = image("/images/shared/shared_001.jpg");
-            var shared_thumb_02 = image("/images/shared/shared_002.jpg");
-            var shared_thumb_03 = image("/images/shared/shared_003.jpg");
-            var shared_thumb_04 = image("/images/shared/shared_004.jpg");
+            var shared_thumb_01 = image("/images/shared/shared_thumb_001.jpg");
+            var shared_thumb_02 = image("/images/shared/shared_thumb_002.jpg");
+            var shared_thumb_03 = image("/images/shared/shared_thumb_003.jpg");
+            var shared_thumb_04 = image("/images/shared/shared_thumb_004.jpg");
 
             var acme = organization("ACME", ["1 Roadrunner Road", "Arizona", "ACM ARZ"]);
             var globex = organization("Globex", ["27 Marge Avenue", "Westville", "Springfield", "Oregon", "SPR 009"], sharedIcon);
@@ -81,10 +81,10 @@ class DBCreator {
             var hooli = organization("Hooli", ["2624 Mill Street", "ABC XYZ"], sharedIcon);
             var massive = organization("Massive Dynamic", ["137 Tillman Station", "O'Fallon", "Connecticut", "MSV 001"]);
 
-            var ian = worker("ian_harrigan", ["52", "Some street", "Sliema", "SLM 001"], [acme, globex, hooli, massive], new Date(2000, 11, 14, 0, 0, 0), Bytes.ofString("this is ians contract document"), [ian_image_01, ian_image_02, ian_image_03, shared_image_01, shared_image_02, shared_image_03]);
-            var bob = worker("bob_barker", ["POBOX 15", "112 335"], [globex, initech], new Date(2020, 8, 4, 0, 0, 0), null, [bob_image_01, bob_image_02, shared_image_03, shared_image_04]);
+            var ian = worker("ian_harrigan", ["52", "Some street", "Sliema", "SLM 001"], [acme, globex, hooli, massive], new Date(2000, 11, 14, 0, 0, 0), Bytes.ofString("this is ians contract document"), [ian_image_01, ian_image_02, ian_image_03, shared_image_01, shared_image_02, shared_image_03], [ian_thumb_01, ian_thumb_02, ian_thumb_03, shared_thumb_01, shared_thumb_02, shared_thumb_03]);
+            var bob = worker("bob_barker", ["POBOX 15", "112 335"], [globex, initech], new Date(2020, 8, 4, 0, 0, 0), null, [bob_image_01, bob_image_02, shared_image_03, shared_image_04], [bob_thumb_01, bob_thumb_02, shared_thumb_03, shared_thumb_04]);
             var tim = worker("tim_taylor", ["49 Foo Lane", "Theresville", "Someplace", "SMP 485"], [acme, initech], new Date(1990, 3, 25, 0, 0, 0));
-            var jim = worker("jim_jefferies", ["Nowhere avenue", "Moresville", "MOR 762"], [massive], new Date(2010, 6, 18, 0, 0, 0), null, [jim_image_01, shared_image_01, shared_image_04]);
+            var jim = worker("jim_jefferies", ["Nowhere avenue", "Moresville", "MOR 762"], [massive], new Date(2010, 6, 18, 0, 0, 0), null, [jim_image_01, shared_image_01, shared_image_04], [jim_thumb_01, shared_thumb_01, shared_thumb_04]);
 
             list.push(acme.add);
             list.push(globex.add);
@@ -115,6 +115,7 @@ class DBCreator {
         work.startDate = startDate;
         work.contractDocument = contractDocument;
         work.images = images;
+        work.thumbs = thumbs;
         return work;
     }
 
