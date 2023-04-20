@@ -271,8 +271,11 @@ class EntityBuilder {
         }
     }
 
-    static function extractTableName(classType:ClassType) {
-        var tableName = classType.name.toLowerCase();
+    static function extractTableName(classType:ClassType, lowerCase:Bool = true) {
+        var tableName = classType.name;
+        if (lowerCase) {
+            tableName = tableName.toLowerCase();
+        }
         var tableMeta = classType.meta.extract(":table");
         if (tableMeta != null && tableMeta.length > 0) {
             tableName = ExprTools.toString(tableMeta[0].params[0]);
@@ -329,7 +332,7 @@ class EntityBuilder {
             if (exposeId) {
                 access = [APublic];
             }
-            var primaryKeyName = toLowerFirstChar(entityDefinition.tableName) + "Id";
+            var primaryKeyName = toLowerFirstChar(extractTableName(Context.getLocalClass().get(), false)) + "Id";
             fields.insert(0, {
                 name: primaryKeyName,
                 access: access,
