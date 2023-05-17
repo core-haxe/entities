@@ -255,18 +255,17 @@ class EntityBuilder {
                 for (resolvedField in resolvedInstance.get().fields.get()) {
                     if (hasMeta(resolvedField.meta.get(), ":primaryKey")) {
                         var resolvedFieldType = TypeTools.toComplexType(resolvedField.type);
-                        // TODO: might want to prefix the field with resolvedTableName var so we can have multiple instance of the same type
                         var resolvedFieldName = resolvedField.name;
+                        defineTableRelationship(entityDefinition.tableName + "." + field.name, resolvedTableName + "." + resolvedFieldName);
                         primaryFieldName = resolvedFieldName;
                         entityDefinition.fields.push({
                             name: field.name,
-                            type: EntityFieldType.Class(resolvedInstance.toString(), EntityFieldRelationship.OneToOne(entityDefinition.tableName, resolvedFieldName, resolvedTableName, resolvedFieldName), haxeTypeToEntityFieldType(resolvedFieldType)),
+                            type: EntityFieldType.Class(resolvedInstance.toString(), EntityFieldRelationship.OneToOne(entityDefinition.tableName, field.name, resolvedTableName, resolvedFieldName), haxeTypeToEntityFieldType(resolvedFieldType)),
                             options: fieldOptions
                         });
                         break;
                     }
                 }
-                defineTableRelationship(entityDefinition.tableName + "." + primaryFieldName, resolvedTableName + "." + primaryFieldName);
             case _:
         }
     }
@@ -464,10 +463,11 @@ class EntityBuilder {
                             pushValueExpr = macro {value: entities.EntityUtils.iso8601ToDate(value), valueId: valueId};
                         case _:    
                     }
-                    loopExprs.push(macro var tempId = record.field(fieldPrefix + "." + $v{linkTableName} + "." + $v{entityDefinition.primaryKeyFieldName}));
+                    loopExprs.push(macro var newPrefix = fieldPrefix + "." + $v{entityDefinition.primaryKeyFieldName} + "." + $v{linkTableName} + "." + $v{entityDefinition.primaryKeyFieldName});
+                    loopExprs.push(macro var tempId = record.field(newPrefix + "." + $v{entityDefinition.primaryKeyFieldName}));
                     loopExprs.push(macro if (this.$primaryKeyFieldName == tempId) {
-                        var valueId = record.field(fieldPrefix + "." + $v{linkTableName} + "." + "valueId");
-                        var value = record.field(fieldPrefix + "." + $v{linkTableName} + "." + "value");
+                        var valueId = record.field(newPrefix + "." + "valueId");
+                        var value = record.field(newPrefix + "." + "value");
                         var primitiveArrayItemCache = primitiveArrayCacheMap.get($v{fieldName});
                         if (primitiveArrayItemCache == null) {
                             primitiveArrayItemCache = [];
@@ -519,7 +519,8 @@ class EntityBuilder {
                     } else {
                         simpleExprs.push(macro this.$varName = new $classType());
                     }
-                    simpleExprs.push(macro @:privateAccess this.$varName.fromRecords(records, fieldPrefix + "." + $v{table2}));
+                    simpleExprs.push(macro var newPrefix = fieldPrefix + "." + $v{field1} + "." + $v{table2} + "." + $v{field2});
+                    simpleExprs.push(macro @:privateAccess this.$varName.fromRecords(records, newPrefix));
                     simpleExprs.push(macro if (@:privateAccess this.$varName._hasData == false) this.$varName = null; else this._hasData = true);
                     simpleExprs.push(macro if (this.$varName != null) @:privateAccess this.$varName.registerNotificationListener(entities.EntityNotificationType.Deleted, $i{functionName}));
 
@@ -572,19 +573,20 @@ class EntityBuilder {
                         createEntityExpr = macro {};
                     }
 
-                    loopExprs.push(macro var tempId = record.field(fieldPrefix + "." + $v{linkTableName} + "." + $v{table2} + "." + $v{field2}));
+                    loopExprs.push(macro var newPrefix = fieldPrefix + "." + $v{field1} + "." + $v{linkTableName} + "." + $v{field1} + "." + $v{field2} + "." + $v{table2} + "." + $v{field2});
+                    loopExprs.push(macro var tempId = record.field(newPrefix + "." + $v{field2}));
                     loopExprs.push(macro if (tempId != null) {
                         var cacheKey = $v{varName} + "_" + tempId;
                         if (!cacheMap.exists(cacheKey)) {
                             var item:$classComplexType = $createEntityExpr;
                             var filteredRecords = records.filter(item -> {
-                                var recordId = item.field(fieldPrefix + "." + $v{linkTableName} + "." + $v{table2} + "." + $v{field2});
+                                var recordId = item.field(newPrefix + "." + $v{field2});
                                 if (recordId == null) {
                                     return false;
                                 }
                                 return tempId == recordId;
                             });
-                            @:privateAccess item.fromRecords(filteredRecords, fieldPrefix + "." + $v{linkTableName} + "." + $v{table2});
+                            @:privateAccess item.fromRecords(filteredRecords, newPrefix);
                             if (@:privateAccess item._hasData == true) {
                                 this.$varName.push(item);
                                 cacheMap.set(cacheKey, true);

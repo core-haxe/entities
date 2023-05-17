@@ -10,6 +10,7 @@ class TestAll {
         var runner = new Runner();
 
         runner.addCase(new TestBasic());
+        runner.addCase(new TestSimple());
         runner.addCase(new TestMultipleCalls());
         runner.addCase(new TestBasicStructInit());
         runner.addCase(new TestFakeOrgEntities());
