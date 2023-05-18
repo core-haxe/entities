@@ -46,6 +46,7 @@ class EntityManager {
 
         _propertiesApplied = true;
         database.setProperty("alwaysAliasResultFields", true);
+        database.setProperty("complexRelationships", true);
     }
 
     private var _connected:Bool = false;
