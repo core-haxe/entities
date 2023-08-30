@@ -830,7 +830,12 @@ class EntityBuilder {
                     return new promises.Promise((resolve, reject) -> {
                         entities.EntityManager.instance.database.table(schema.name).then(result -> {
                             if (result.table.exists) {
-                                resolve(true);
+                                result.table.applySchema(schema).then(result -> {
+                                    resolve(true);
+                                    return null;
+                                }, error -> {
+                                    reject(error);
+                                });
                                 return null;
                             }
                             entities.EntityManager.instance.database.createTable(schema.name, schema.columns).then(result -> {
