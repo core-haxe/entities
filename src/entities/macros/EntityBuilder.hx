@@ -1311,6 +1311,11 @@ class EntityBuilder {
                         case _:
                     }
 
+                    var cascadeDeletions = false;
+                    if (fieldDef.options.contains(EntityFieldOption.CascadeDeletions)) {
+                        cascadeDeletions = true;
+                    }
+
                     fields.push({
                         name: functionName,
                         access: [APrivate],
@@ -1386,7 +1391,22 @@ class EntityBuilder {
                                             return this.addLinks($v{linkTableName}, [linkRecord]);
                                         }
 
-                                        var deletePromise = function(tableName:String, key1:Any, key2:Any) {
+                                        var deletePromise = function(tableName:String, key1:Any) {
+                                            return new promises.Promise((resolve, reject) -> {
+                                                connect().then(success -> {
+                                                    return database.table(tableName);
+                                                }).then(result -> {
+                                                    var q = Query.query(Query.field($v{linkField2}) = key1);
+                                                    return result.table.deleteAll(q);
+                                                }).then(result -> {
+                                                    resolve(true);
+                                                }, error -> {
+                                                    reject(error);
+                                                });
+                                            });
+                                        }
+
+                                        var deleteLinkPromise = function(tableName:String, key1:Any, key2:Any) {
                                             return new promises.Promise((resolve, reject) -> {
                                                 connect().then(success -> {
                                                     return database.table(tableName);
@@ -1415,7 +1435,10 @@ class EntityBuilder {
                                         for (deletion in deletions) {
                                             var key1 = this.$field1;
                                             var key2 = deletion;
-                                            list.push(deletePromise.bind($v{linkTableName}, key1, key2));
+                                            if ($v{cascadeDeletions}) {
+                                                list.push(deletePromise.bind($v{table2}, key2));
+                                            }
+                                            list.push(deleteLinkPromise.bind($v{linkTableName}, key1, key2));
                                         }
                                         return promises.PromiseUtils.runSequentially(list);
                                     }).then(result -> {
