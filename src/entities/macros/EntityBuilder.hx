@@ -180,6 +180,16 @@ class EntityBuilder {
         buildRefresh(entityClassType, entityDefinition, fields);
         buildAll(entityClassType, entityDefinition, fields);
         
+        #if serializers
+        if (localClass.meta.has(":serialize")) {
+            var value = localClass.meta.extract(":serialize")[0].params[0];
+            switch(ExprTools.toString(value).toLowerCase()) {
+                case "json":
+                    @:privateAccess serializers.macros.JsonSerializableBuilder.addFields(fields);
+            }
+        }
+        #end
+
         return fields;
     }
 
