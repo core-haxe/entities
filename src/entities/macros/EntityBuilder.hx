@@ -2010,6 +2010,15 @@ class EntityBuilder {
     ];
     static function buildFindByEntityFunction(className:String, entityName:String, searchColumnPrefix:String, entityClassType:TypePath, entityDefinition:EntityDefinition, fields:Array<Field>) {
         var primaryKeyFieldName = entityDefinition.primaryKeyFieldName;
+        var primaryKeyType = macro: Int;
+        switch (entityDefinition.primaryKeyFieldType) {
+            case EntityFieldType.Number:
+                primaryKeyType = macro: Int;
+            case EntityFieldType.Text:
+                primaryKeyType = macro: String;
+            case _:    
+        }
+
         var returnComplexType = TPath(entityClassType);
         if (commonReplacePluralReplacements.exists(entityName.toLowerCase())) {
             entityName = commonReplacePluralReplacements.get(entityName.toLowerCase());
@@ -2069,7 +2078,7 @@ class EntityBuilder {
                         $b{fieldExprs}
                         var q = Query.joinQueryParts(queryParts, Query.QBinop.QOpBoolAnd);
                         all(q).then(results -> {
-                            var primaryKeys = [];
+                            var primaryKeys:Array<$primaryKeyType> = [];
                             for (r in results) {
                                 primaryKeys.push(r.$primaryKeyFieldName);
                             }
