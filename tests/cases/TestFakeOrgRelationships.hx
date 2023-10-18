@@ -160,16 +160,37 @@ class TestFakeOrgRelationships extends TestBase {
             Assert.equals("Sliema", workers[0].address.lines[2].text);
             Assert.equals("SLM 001", workers[0].address.postCode);
             // orgs
-            Assert.equals(1, workers[0].organizations.length);
+            Assert.equals(4, workers[0].organizations.length);
+            // ACME
+            Assert.equals("ACME", workers[0].organizations[0].name);
+            Assert.equals("/icons/orgs/acme.png", workers[0].organizations[0].icon.path);
+            Assert.equals(2, workers[0].organizations[0].address.lines.length);
+            Assert.equals("1 Roadrunner Road", workers[0].organizations[0].address.lines[0].text);
+            Assert.equals("Arizona", workers[0].organizations[0].address.lines[1].text);
+            Assert.equals("ACM ARZ", workers[0].organizations[0].address.postCode);
             // Globex
-            Assert.equals("Globex", workers[0].organizations[0].name);
-            Assert.equals("/icons/orgs/shared_icon.png", workers[0].organizations[0].icon.path);
-            Assert.equals(4, workers[0].organizations[0].address.lines.length);
-            Assert.equals("27 Marge Avenue", workers[0].organizations[0].address.lines[0].text);
-            Assert.equals("Westville", workers[0].organizations[0].address.lines[1].text);
-            Assert.equals("Springfield", workers[0].organizations[0].address.lines[2].text);
-            Assert.equals("Oregon", workers[0].organizations[0].address.lines[3].text);
-            Assert.equals("SPR 009", workers[0].organizations[0].address.postCode);
+            Assert.equals("Globex", workers[0].organizations[1].name);
+            Assert.equals("/icons/orgs/shared_icon.png", workers[0].organizations[1].icon.path);
+            Assert.equals(4, workers[0].organizations[1].address.lines.length);
+            Assert.equals("27 Marge Avenue", workers[0].organizations[1].address.lines[0].text);
+            Assert.equals("Westville", workers[0].organizations[1].address.lines[1].text);
+            Assert.equals("Springfield", workers[0].organizations[1].address.lines[2].text);
+            Assert.equals("Oregon", workers[0].organizations[1].address.lines[3].text);
+            Assert.equals("SPR 009", workers[0].organizations[1].address.postCode);
+            // Hooli
+            Assert.equals("Hooli", workers[0].organizations[2].name);
+            Assert.equals("/icons/orgs/shared_icon.png", workers[0].organizations[2].icon.path);
+            Assert.equals(1, workers[0].organizations[2].address.lines.length);
+            Assert.equals("2624 Mill Street", workers[0].organizations[2].address.lines[0].text);
+            Assert.equals("ABC XYZ", workers[0].organizations[2].address.postCode);
+            // Massive Dynamic
+            Assert.equals("Massive Dynamic", workers[0].organizations[3].name);
+            Assert.equals("/icons/orgs/massive_dynamic.png", workers[0].organizations[3].icon.path);
+            Assert.equals(3, workers[0].organizations[3].address.lines.length);
+            Assert.equals("137 Tillman Station", workers[0].organizations[3].address.lines[0].text);
+            Assert.equals("O'Fallon", workers[0].organizations[3].address.lines[1].text);
+            Assert.equals("Connecticut", workers[0].organizations[3].address.lines[2].text);
+            Assert.equals("MSV 001", workers[0].organizations[3].address.postCode);
 
             // bob
             Assert.equals("bob_barker", workers[1].username);
@@ -179,7 +200,7 @@ class TestFakeOrgRelationships extends TestBase {
             Assert.equals("POBOX 15", workers[1].address.lines[0].text);
             Assert.equals("112 335", workers[1].address.postCode);
             // orgs
-            Assert.equals(1, workers[1].organizations.length);
+            Assert.equals(2, workers[1].organizations.length);
             // Globex
             Assert.equals("Globex", workers[1].organizations[0].name);
             Assert.equals("/icons/orgs/shared_icon.png", workers[1].organizations[0].icon.path);
@@ -189,6 +210,14 @@ class TestFakeOrgRelationships extends TestBase {
             Assert.equals("Springfield", workers[1].organizations[0].address.lines[2].text);
             Assert.equals("Oregon", workers[1].organizations[0].address.lines[3].text);
             Assert.equals("SPR 009", workers[1].organizations[0].address.postCode);
+            // IniTech
+            Assert.equals("IniTech", workers[1].organizations[1].name);
+            Assert.equals("/icons/orgs/initech.png", workers[1].organizations[1].icon.path);
+            Assert.equals(3, workers[1].organizations[1].address.lines.length);
+            Assert.equals("77 Daylene Drive", workers[1].organizations[1].address.lines[0].text);
+            Assert.equals("Maybee", workers[1].organizations[1].address.lines[1].text);
+            Assert.equals("Michigan", workers[1].organizations[1].address.lines[2].text);
+            Assert.equals("MCG 834", workers[1].organizations[1].address.postCode);
 
             complete();
             async.done();

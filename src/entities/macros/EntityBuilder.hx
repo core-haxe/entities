@@ -988,6 +988,42 @@ class EntityBuilder {
             }),
             pos: Context.currentPos()
         });
+
+        fields.push({
+            name: "primaryKeyMultipleQuery",
+            access: [APrivate],
+            meta: [{name: ":noCompletion", pos: Context.currentPos()}],
+            kind: FFun({
+                args: [{
+                    name: "primaryKeys",
+                    type: macro: Array<$primaryKeyType>
+                }],
+                ret: macro: Query.QueryExpr,
+                expr: macro {
+                    var q = Query.query(Query.field($v{primaryKeyFieldName}) in primaryKeys);
+                    return q;
+                }
+            }),
+            pos: Context.currentPos()
+        });
+
+        fields.push({
+            name: "primaryKeyMultipleQueryStatic",
+            access: [AStatic],
+            meta: [{name: ":noCompletion", pos: Context.currentPos()}],
+            kind: FFun({
+                args: [{
+                    name: "primaryKeys",
+                    type: macro: Array<$primaryKeyType>
+                }],
+                ret: macro: Query.QueryExpr,
+                expr: macro {
+                    var q = Query.query(Query.field($v{primaryKeyFieldName}) in primaryKeys);
+                    return q;
+                }
+            }),
+            pos: Context.currentPos()
+        });
     }
 
     static function buildNotifiers(entityDefinition:EntityDefinition, fields:Array<Field>) {
@@ -1959,11 +1995,11 @@ class EntityBuilder {
         switch (fieldDef.type) {
             case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                 var searchColumnPrefix = field1 + "." + field1 + "." + field2;
-                buildFindByEntityFunction(className, fieldDef.name, searchColumnPrefix, entityClassType, fields);
+                buildFindByEntityFunction(className, fieldDef.name, searchColumnPrefix, entityClassType, entityDefinition, fields);
             case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
                 var linkTableName = entityDefinition.tableName + "_" + fieldDef.name.toLowerCase();
                 var searchColumnPrefix = field1 + "." + linkTableName + "." + field1 + "." + field2 + "." + table2 + "." + field2;
-                buildFindByEntityFunction(className, fieldDef.name, searchColumnPrefix, entityClassType, fields);
+                buildFindByEntityFunction(className, fieldDef.name, searchColumnPrefix, entityClassType, entityDefinition, fields);
             case _:
         }
     }
@@ -1972,7 +2008,8 @@ class EntityBuilder {
     private static final commonReplacePluralReplacements = [
         "properties" => "property"
     ];
-    static function buildFindByEntityFunction(className:String, entityName:String, searchColumnPrefix:String, entityClassType:TypePath, fields:Array<Field>) {
+    static function buildFindByEntityFunction(className:String, entityName:String, searchColumnPrefix:String, entityClassType:TypePath, entityDefinition:EntityDefinition, fields:Array<Field>) {
+        var primaryKeyFieldName = entityDefinition.primaryKeyFieldName;
         var returnComplexType = TPath(entityClassType);
         if (commonReplacePluralReplacements.exists(entityName.toLowerCase())) {
             entityName = commonReplacePluralReplacements.get(entityName.toLowerCase());
@@ -2027,10 +2064,22 @@ class EntityBuilder {
                 args: functionArgs,
                 ret: macro: promises.Promise<Array<$returnComplexType>>,
                 expr: macro {
-                    var queryParts = [];
-                    $b{fieldExprs}
-                    var q = Query.joinQueryParts(queryParts, Query.QBinop.QOpBoolAnd);
-                    return all(q);
+                    return new promises.Promise((resolve, reject) -> {
+                        var queryParts = [];
+                        $b{fieldExprs}
+                        var q = Query.joinQueryParts(queryParts, Query.QBinop.QOpBoolAnd);
+                        all(q).then(results -> {
+                            var primaryKeys = [];
+                            for (r in results) {
+                                primaryKeys.push(r.$primaryKeyFieldName);
+                            }
+                            return all(primaryKeyMultipleQueryStatic(primaryKeys));
+                        }).then(results -> {
+                            resolve(results);
+                        }, error -> {
+                            reject(error);
+                        });
+                    });
                 }
             }),
             pos: Context.currentPos()
