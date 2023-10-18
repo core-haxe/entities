@@ -1,8 +1,8 @@
 package entities.macros;
 
-import haxe.macro.ComplexTypeTools;
 import db.ColumnOptions;
 import db.ColumnType;
+import haxe.macro.ComplexTypeTools;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.ExprTools;
@@ -179,7 +179,9 @@ class EntityBuilder {
         buildDelete(entityClassType, entityDefinition, fields);
         buildFind(entityClassType, entityDefinition, fields);
         buildFindById(entityClassType, entityDefinition, fields);
+        #if !no_find_by_entity
         buildFindByEntity(entityClassType, entityDefinition, fields);
+        #end
         buildFindInternal(entityClassType, entityDefinition, fields);
         buildRefresh(entityClassType, entityDefinition, fields);
         buildAll(entityClassType, entityDefinition, fields);
