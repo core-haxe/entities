@@ -15,6 +15,8 @@ class TestAll {
         runner.addCase(new TestBasicStructInit());
         runner.addCase(new TestFakeOrgEntities());
         runner.addCase(new TestBooks());
+        runner.addCase(new TestFakeOrgRelationships());
+        runner.addCase(new TestUser());
 
         Report.create(runner, SuccessResultsDisplayMode.AlwaysShowSuccessResults, HeaderDisplayMode.NeverShowHeader);
         runner.run();

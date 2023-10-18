@@ -1,5 +1,6 @@
 package entities.macros;
 
+import haxe.macro.ComplexTypeTools;
 import db.ColumnOptions;
 import db.ColumnType;
 import haxe.macro.Context;
@@ -7,6 +8,8 @@ import haxe.macro.Expr;
 import haxe.macro.ExprTools;
 import haxe.macro.Type;
 import haxe.macro.TypeTools;
+
+using StringTools;
 
 class EntityBuilder {
     macro static function build():Array<Field> {
@@ -176,6 +179,7 @@ class EntityBuilder {
         buildDelete(entityClassType, entityDefinition, fields);
         buildFind(entityClassType, entityDefinition, fields);
         buildFindById(entityClassType, entityDefinition, fields);
+        buildFindByEntity(entityClassType, entityDefinition, fields);
         buildFindInternal(entityClassType, entityDefinition, fields);
         buildRefresh(entityClassType, entityDefinition, fields);
         buildAll(entityClassType, entityDefinition, fields);
@@ -654,6 +658,8 @@ class EntityBuilder {
                     if (records == null || records.length < 1) {
                         return;
                     }
+                    //trace("bob", this.definition().tableName, records.length);
+                    //trace(records);
                     $b{simpleExprs}
                     var cacheMap:Map<String, Bool> = [];
                     var primitiveArrayCacheMap:Map<String, Map<String, Bool>> = [];
@@ -1943,6 +1949,113 @@ class EntityBuilder {
         });
     }
 
+    static function buildFindByEntity(entityClassType:TypePath, entityDefinition:EntityDefinition, fields:Array<Field>) {
+        for (fieldDef in entityDefinition.fields) {
+            buildFindByEntityItem(entityClassType, fieldDef, entityDefinition, fields);
+        }
+    }
+
+    static function buildFindByEntityItem(entityClassType:TypePath, fieldDef:EntityFieldDefinition, entityDefinition:EntityDefinition, fields:Array<Field>) {
+        switch (fieldDef.type) {
+            case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
+                var searchColumnPrefix = field1 + "." + field1 + "." + field2;
+                buildFindByEntityFunction(className, fieldDef.name, searchColumnPrefix, entityClassType, fields);
+            case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
+                var linkTableName = entityDefinition.tableName + "_" + fieldDef.name.toLowerCase();
+                var searchColumnPrefix = field1 + "." + linkTableName + "." + field1 + "." + field2 + "." + table2 + "." + field2;
+                buildFindByEntityFunction(className, fieldDef.name, searchColumnPrefix, entityClassType, fields);
+            case _:
+        }
+    }
+
+    // is this getting out of hand?!?
+    private static final commonReplacePluralReplacements = [
+        "properties" => "property"
+    ];
+    static function buildFindByEntityFunction(className:String, entityName:String, searchColumnPrefix:String, entityClassType:TypePath, fields:Array<Field>) {
+        var returnComplexType = TPath(entityClassType);
+        if (commonReplacePluralReplacements.exists(entityName.toLowerCase())) {
+            entityName = commonReplacePluralReplacements.get(entityName.toLowerCase());
+        } else if (entityName.endsWith("s") && !entityName.endsWith("ss")) { // does removing "s" always makes sense??
+            entityName = entityName.substring(0, entityName.length - 1);
+        }
+        // captilize first letter
+        entityName = entityName.substr(0, 1).toUpperCase() + entityName.substr(1, entityName.length);
+        var functionNameAll = "findAllBy" + entityName;
+        var functionNameOne = "findBy" + entityName;
+
+        var parts = className.split(".");
+        var t:TypePath = {name: parts.pop(), pack: parts};
+        var entityComplexType = TPath(t);
+        var resolvedType = Context.resolveType(entityComplexType, Context.currentPos());
+        var fieldExprs = [];
+        var functionArgs:Array<FunctionArg> = [];
+        var functionArgExprs:Array<Expr> = [];
+        switch (resolvedType) {
+            case TInst(t, params):
+                for (f in t.get().fields.get()) {
+                    switch (f.kind) {
+                        case FVar(read, write):
+                            var fieldName = f.name;
+                            if (!f.meta.has(":jignored") && read == AccNormal && write == AccNormal) {
+                                switch (TypeTools.toString(f.type)) {
+                                    case "String" | "Int" | "Float" | "Bool" | "Date" | "Null<Int>" | "Null<Float>" | "Null<Bool>":
+                                        functionArgs.push({
+                                            name: fieldName,
+                                            type: TypeTools.toComplexType(f.type),
+                                            opt: true
+                                        });
+                                        functionArgExprs.push(macro $i{fieldName});
+                                        fieldExprs.push(macro if ($i{fieldName} != null) {
+                                            var column = $v{searchColumnPrefix} + "." + $v{fieldName};
+                                            var qp = Query.QueryExpr.QueryBinop(Query.QBinop.QOpAssign, Query.QueryExpr.QueryConstant(Query.QConstant.QIdent(column)), Query.QueryExpr.QueryValue($i{fieldName}));
+                                            queryParts.push(qp);
+                                        });
+                                    case _:    
+                                }
+                            }
+                        case _:   
+                    }
+                }
+            case _:    
+        }
+
+        fields.push({
+            name: functionNameAll,
+            access: [APublic, AStatic],
+            kind: FFun({
+                args: functionArgs,
+                ret: macro: promises.Promise<Array<$returnComplexType>>,
+                expr: macro {
+                    var queryParts = [];
+                    $b{fieldExprs}
+                    var q = Query.joinQueryParts(queryParts, Query.QBinop.QOpBoolAnd);
+                    return all(q);
+                }
+            }),
+            pos: Context.currentPos()
+        });
+
+        fields.push({
+            name: functionNameOne,
+            access: [APublic, AStatic],
+            kind: FFun({
+                args: functionArgs,
+                ret: macro: promises.Promise<$returnComplexType>,
+                expr: macro {
+                    return new promises.Promise((resolve, reject) -> {
+                        $i{functionNameAll}($a{functionArgExprs}).then(list -> {
+                            resolve(list[0]);
+                        }, error -> {
+                            reject(error);
+                        });
+                    });
+                }
+            }),
+            pos: Context.currentPos()
+        });
+    }
+
     static function hasField(fields:Array<Field>, name:String):Bool {
         for (field in fields) {
             if (field.name == name) {
@@ -2059,6 +2172,16 @@ class EntityBuilder {
         }
         var relationships:Array<String> = haxe.Unserializer.run(relationshipsString);
         return relationships;
+    }
+
+    static function findRelationship(field:String):String {
+        for (r in readTableRelationships()) {
+            var parts = r.split("|");
+            if (parts[0] == field) {
+                return r;
+            }
+        }
+        return null;
     }
 
     #end
