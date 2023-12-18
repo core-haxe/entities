@@ -4,5 +4,6 @@
 -lib utest
 -lib entities
 -lib db-sqlite
+-lib db-mysql
 
 -D no-deprecation-warnings

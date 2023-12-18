@@ -1,10 +1,13 @@
 package cases;
 
-import utest.Test;
+import utest.ITest;
 
-class TestBase extends Test {
+class TestBase implements ITest {
     private var timeStart:Float = 0;
     private var timeName:String;
+
+    public function new() {
+    }
 
     private function start(name:String) {
         timeStart = Sys.time();

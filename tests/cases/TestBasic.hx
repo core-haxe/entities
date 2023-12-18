@@ -1,5 +1,6 @@
 package cases;
 
+import db.IDatabase;
 import haxe.CallStack;
 import haxe.io.Bytes;
 import cases.basic.BasicEntity;
@@ -10,27 +11,30 @@ import utest.Async;
 
 @:timeout(20000)
 class TestBasic extends TestBase {
-    function setupClass() {
-        logging.LogManager.instance.addAdaptor(new logging.adaptors.ConsoleLogAdaptor({
-            levels: [logging.LogLevel.Info, logging.LogLevel.Error]
-        }));
-    }
+    private var db:IDatabase;
 
-    function teardownClass() {
-        logging.LogManager.instance.clearAdaptors();
+    public function new(db:IDatabase) {
+        super();
+        this.db = db;
     }
 
     function setup(async:Async) {
-        new DBCreator().create().then(_ -> {
+        logging.LogManager.instance.addAdaptor(new logging.adaptors.ConsoleLogAdaptor({
+            levels: [logging.LogLevel.Info, logging.LogLevel.Error]
+        }));
+        new DBCreator().create(db).then(_ -> {
             async.done();
-        }, error -> {
-            trace(error);
         });
     }
 
     function teardown(async:Async) {
-        EntityManager.instance.reset();
-        async.done();
+        logging.LogManager.instance.clearAdaptors();
+        EntityManager.instance.reset().then(_ -> {
+            new DBCreator().cleanUp();
+            async.done();
+        }, error -> {
+            trace(error);
+        });
     }
 
     function testBasicTypes(async:Async) {
@@ -134,6 +138,7 @@ class TestBasic extends TestBase {
         }, error -> {
             trace(error);
             trace(CallStack.toString(CallStack.exceptionStack(true)));
+            async.done();
         });
     }
 

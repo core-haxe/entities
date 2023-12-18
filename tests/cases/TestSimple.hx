@@ -1,11 +1,9 @@
 package cases;
 
+import db.IDatabase;
 import cases.simple.C;
 import cases.simple.B;
 import cases.simple.A;
-import haxe.CallStack;
-import haxe.io.Bytes;
-import cases.basic.BasicEntity;
 import utest.Assert;
 import entities.EntityManager;
 import cases.simple.DBCreator;
@@ -13,27 +11,30 @@ import utest.Async;
 
 @:timeout(20000)
 class TestSimple extends TestBase {
-    function setupClass() {
-        logging.LogManager.instance.addAdaptor(new logging.adaptors.ConsoleLogAdaptor({
-            levels: [logging.LogLevel.Info, logging.LogLevel.Error]
-        }));
-    }
+    private var db:IDatabase;
 
-    function teardownClass() {
-        logging.LogManager.instance.clearAdaptors();
+    public function new(db:IDatabase) {
+        super();
+        this.db = db;
     }
 
     function setup(async:Async) {
-        new DBCreator().create().then(_ -> {
+        logging.LogManager.instance.addAdaptor(new logging.adaptors.ConsoleLogAdaptor({
+            levels: [logging.LogLevel.Info, logging.LogLevel.Error]
+        }));
+        new DBCreator().create(db).then(_ -> {
             async.done();
-        }, error -> {
-            trace(error);
         });
     }
 
     function teardown(async:Async) {
-        EntityManager.instance.reset();
-        async.done();
+        logging.LogManager.instance.clearAdaptors();
+        EntityManager.instance.reset().then(_ -> {
+            new DBCreator().cleanUp();
+            async.done();
+        }, error -> {
+            trace(error);
+        });
     }
 
     function testMulitpleEntitiesOfSameType(async:Async) {
