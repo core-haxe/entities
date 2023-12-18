@@ -68,10 +68,17 @@ class EntityManager {
         });
     }
 
-    public function reset() {
-        database = null;
-        _connected = false;
-        _propertiesApplied = false;
-        _relationshipsApplied = false;
+    public function reset():Promise<Bool> {
+        return new Promise((resolve, reject) -> {
+            database.disconnect().then(_ -> {
+                database = null;
+                _connected = false;
+                _propertiesApplied = false;
+                _relationshipsApplied = false;
+                resolve(true);
+            }, error -> {
+                reject(error);
+            });
+        });
     }
 }
