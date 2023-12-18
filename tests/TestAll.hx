@@ -8,14 +8,33 @@ import utest.Runner;
 import cases.*;
 
 class TestAll {
+    public static var databaseBackend:String = null;
+
     public static function main() {
         var runner = new Runner();
 
-        addBasicCases(runner, sqlite("basic"));
-        addSimpleCases(runner, sqlite("simple"));
-        addFakeOrgCases(runner, sqlite("fakeorg"));
-        addBooksCases(runner, sqlite("books"));
-        addUsersCases(runner, sqlite("users"));
+        databaseBackend = Sys.getEnv("DB_CORE_BACKEND");
+        if (databaseBackend == null) {
+            databaseBackend = "sqlite";
+        }
+
+        trace("DB_CORE_BACKEND: " + databaseBackend);
+        if (databaseBackend == "sqlite") {
+            addBasicCases(runner, sqlite("basic"));
+            addSimpleCases(runner, sqlite("simple"));
+            addFakeOrgCases(runner, sqlite("fakeorg"));
+            addBooksCases(runner, sqlite("books"));
+            addUsersCases(runner, sqlite("users"));
+        } else if (databaseBackend == "mysql") {
+            trace("MYSQL_HOST: " + Sys.getEnv("MYSQL_HOST"));
+            trace("MYSQL_USER: " + Sys.getEnv("MYSQL_USER"));
+            trace("MYSQL_PASS: " + Sys.getEnv("MYSQL_PASS"));
+            addBasicCases(runner, mysql("basic"));
+            addSimpleCases(runner, mysql("simple"));
+            addFakeOrgCases(runner, mysql("fakeorg"));
+            addBooksCases(runner, mysql("books"));
+            addUsersCases(runner, mysql("users"));
+        }
 
         Report.create(runner, SuccessResultsDisplayMode.AlwaysShowSuccessResults, HeaderDisplayMode.NeverShowHeader);
         runner.run();

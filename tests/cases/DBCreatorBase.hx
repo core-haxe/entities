@@ -1,5 +1,6 @@
 package cases;
 
+import haxe.Json;
 import sys.FileSystem;
 import promises.Promise;
 import db.IDatabase;
@@ -21,16 +22,21 @@ class DBCreatorBase {
             }
 
             EntityManager.instance.database = db;
-            if (!createData) {
+            @:privateAccess EntityManager.instance.connect().then(_ -> {
+                return db.delete();
+            }).then(_ -> {
+                return db.create();
+            }).then(_ -> {
+                if (!createData) {
+                    return null;
+                }
+                return createDummyData();
+            }).then(_ -> {
                 resolve(true);
-            } else {
-                createDummyData().then(_ -> {
-                    resolve(true);
-                }, error -> {
-                    trace(haxe.Json.stringify(error));
-                    trace("error", error);
-                });
-            }
+            }, error -> {
+                trace(error);
+                trace(Json.stringify(error));
+            });
         });
     }
 
