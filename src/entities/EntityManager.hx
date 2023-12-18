@@ -60,6 +60,8 @@ class EntityManager {
             applyProperties();
             applyTableRelationships();
             database.connect().then(result -> {
+                return database.create();
+            }).then(_ -> {
                 _connected = true;
                 resolve(true);
             }, (error:DatabaseError) -> {
