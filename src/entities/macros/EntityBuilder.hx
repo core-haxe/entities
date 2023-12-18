@@ -898,7 +898,6 @@ class EntityBuilder {
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
                         entities.EntityManager.instance.connect().then(success -> {
-                            this.database = entities.EntityManager.instance.database;
                             return CheckTables();
                         }).then(entity -> {
                             resolve(true);
@@ -908,14 +907,6 @@ class EntityBuilder {
                     });
                 }
             }),
-            pos: Context.currentPos()
-        });
-
-        fields.push({
-            name: "database",
-            access: [APrivate],
-            kind: FVar(macro: db.IDatabase, macro null),
-            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}, {name: ":optional", pos: Context.currentPos()}],
             pos: Context.currentPos()
         });
     }
@@ -1120,7 +1111,7 @@ class EntityBuilder {
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
                         connect().then(success -> {
-                            return database.table(definition().tableName);
+                            return entities.EntityManager.instance.database.table(definition().tableName);
                         }).then(result -> {
                             return result.table.find(primaryKeyQuery($i{primaryKeyFieldName}), false);
                         }).then(result -> {
@@ -1219,7 +1210,7 @@ class EntityBuilder {
                             $b{exprs};
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(result -> {
-                            return database.table(definition().tableName);
+                            return entities.EntityManager.instance.database.table(definition().tableName);
                         }).then(result -> {
                             exists().then(alreadyExists -> {
                                 if (alreadyExists) {
@@ -1257,7 +1248,7 @@ class EntityBuilder {
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
                         connect().then(success -> {
-                            return database.table(tableName);
+                            return entities.EntityManager.instance.database.table(tableName);
                         }).then(result -> {
                             var list:Array<() -> promises.Promise<Any>> = [];
                             for (record in records) {
@@ -1307,7 +1298,7 @@ class EntityBuilder {
                                 return new promises.Promise((resolve, reject) -> {
                                     var array = [];
                                     connect().then(success -> {
-                                        return database.table($v{linkTableName});
+                                        return entities.EntityManager.instance.database.table($v{linkTableName});
                                     }).then(result -> {
 
                                         var list:Array<() -> promises.Promise<Any>> = [];
@@ -1381,7 +1372,7 @@ class EntityBuilder {
                                 return new promises.Promise((resolve, reject) -> {
                                     var array = [];
                                     connect().then(success -> {
-                                        return database.table($v{linkTableName});
+                                        return entities.EntityManager.instance.database.table($v{linkTableName});
                                     }).then(result -> {
                                         var q = Query.query(Query.field($v{linkField1}) = $i{primaryKeyFieldName});
                                         return result.table.find(q);
@@ -1448,7 +1439,7 @@ class EntityBuilder {
                                         var deletePromise = function(tableName:String, key1:Any) {
                                             return new promises.Promise((resolve, reject) -> {
                                                 connect().then(success -> {
-                                                    return database.table(tableName);
+                                                    return entities.EntityManager.instance.database.table(tableName);
                                                 }).then(result -> {
                                                     var q = Query.query(Query.field($v{linkField2}) = key1);
                                                     return result.table.deleteAll(q);
@@ -1463,7 +1454,7 @@ class EntityBuilder {
                                         var deleteLinkPromise = function(tableName:String, key1:Any, key2:Any) {
                                             return new promises.Promise((resolve, reject) -> {
                                                 connect().then(success -> {
-                                                    return database.table(tableName);
+                                                    return entities.EntityManager.instance.database.table(tableName);
                                                 }).then(result -> {
                                                     var q = Query.query(Query.field($v{linkField1}) = key1 && Query.field($v{linkField2}) = key2);
                                                     return result.table.deleteAll(q);
@@ -1531,7 +1522,7 @@ class EntityBuilder {
                             $b{exprs};
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(result -> {
-                            return database.table(definition().tableName);
+                            return entities.EntityManager.instance.database.table(definition().tableName);
                         }).then(result -> {
                             exists().then(alreadyExists -> {
                                 if (alreadyExists) {
@@ -1657,7 +1648,7 @@ class EntityBuilder {
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
                         connect().then(success -> {
-                            return database.table(definition().tableName);
+                            return entities.EntityManager.instance.database.table(definition().tableName);
                         }).then(result -> {
                             return result.table.deleteAll(primaryKeyQuery(this.$primaryKeyFieldName));
                         }).then(result -> {
@@ -1668,7 +1659,7 @@ class EntityBuilder {
                             var list:Array<() -> promises.Promise<Any>> = [];
                             var deleteLinkPromise = function(linkTable:String, linkField:String, linkValue:Any) {
                                 return new promises.Promise((resolve, reject) -> {
-                                    database.table(linkTable).then(result -> {
+                                    entities.EntityManager.instance.database.table(linkTable).then(result -> {
                                         var q = Query.query(linkField = linkValue);
                                         return result.table.deleteAll(q);
                                     }).then(result -> {
@@ -1680,7 +1671,7 @@ class EntityBuilder {
                             }
                             var nullifyOneToOnePromise = function(sourceTable:String, sourceField:String, sourceValue:Any) {
                                 return new promises.Promise((resolve, reject) -> {
-                                    database.table(sourceTable).then(result -> {
+                                    entities.EntityManager.instance.database.table(sourceTable).then(result -> {
                                         var q = Query.query(sourceField = sourceValue);
                                         var record = new db.Record();
                                         record.empty(sourceField);
@@ -1721,7 +1712,7 @@ class EntityBuilder {
                 expr: macro {
                     var tableName = this.definition().tableName;
                     var primaryKeyFieldName = this.definition().primaryKeyFieldName;
-                    var relationships = database.definedTableRelationships();
+                    var relationships = entities.EntityManager.instance.database.definedTableRelationships();
                     if (relationships == null) {
                         return [];
                     }
@@ -1747,7 +1738,7 @@ class EntityBuilder {
                 expr: macro {
                     var tableName = this.definition().tableName;
                     var primaryKeyFieldName = this.definition().primaryKeyFieldName;
-                    var relationships = database.definedTableRelationships();
+                    var relationships = entities.EntityManager.instance.database.definedTableRelationships();
                     if (relationships == null) {
                         return [];
                     }
@@ -1807,7 +1798,7 @@ class EntityBuilder {
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
                         connect().then(success -> {
-                            return database.table(definition().tableName);
+                            return entities.EntityManager.instance.database.table(definition().tableName);
                         }).then(result -> {
                             return result.table.find(query);
                         }).then(result -> {
@@ -1859,7 +1850,7 @@ class EntityBuilder {
                         var entity:$entityComplexType = $createEntityExpr;
                         var array:Array<$entityComplexType> = [];
                         entity.connect().then(success -> {
-                            return entity.database.table(entity.definition().tableName);
+                            return entities.EntityManager.instance.database.table(entity.definition().tableName);
                         }).then(result -> {
                             return result.table.find(query);
                         }).then(result -> {
@@ -1936,7 +1927,7 @@ class EntityBuilder {
                     return new promises.Promise((resolve, reject) -> {
                         var entity:$entityComplexType = $createEntityExpr;
                         entity.connect().then(success -> {
-                            return entity.database.table(entity.definition().tableName);
+                            return entities.EntityManager.instance.database.table(entity.definition().tableName);
                         }).then(result -> {
                             return result.table.find(query);
                         }).then(result -> {
