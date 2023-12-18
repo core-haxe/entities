@@ -1,4 +1,4 @@
-name: neko
+name: sqlite neko
 
 on:
   push:

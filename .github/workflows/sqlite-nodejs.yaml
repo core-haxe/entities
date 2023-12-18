@@ -1,4 +1,4 @@
-name: hl
+name: sqlite nodejs
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-20.04
+          - ubuntu-latest
         haxe:
           - 4.2.5
     with:
@@ -20,7 +20,7 @@ jobs:
       haxe-version: ${{ matrix.haxe }}
       haxe-libs: |
         utest
-      test-hl:  tests/common.hxml --class-path tests
+      test-node:  tests/common-nodejs.hxml --class-path tests
 
       before-tests: |
         git clone https://github.com/core-haxe/promises
@@ -41,3 +41,6 @@ jobs:
         haxelib dev db-mysql db-mysql
         git clone https://github.com/core-haxe/entities
         haxelib dev entities entities
+        cp -f tests/package.json .
+        cp -f tests/package-lock.json .
+        npm install

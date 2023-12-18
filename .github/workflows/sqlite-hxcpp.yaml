@@ -1,4 +1,4 @@
-name: hxcpp
+name: sqlite hxcpp
 
 on:
   push:
