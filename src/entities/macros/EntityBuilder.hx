@@ -660,8 +660,6 @@ class EntityBuilder {
                     if (records == null || records.length < 1) {
                         return;
                     }
-                    //trace("bob", this.definition().tableName, records.length);
-                    //trace(records);
                     $b{simpleExprs}
                     var cacheMap:Map<String, Bool> = [];
                     var primitiveArrayCacheMap:Map<String, Map<String, Bool>> = [];
