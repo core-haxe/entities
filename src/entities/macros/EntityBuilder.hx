@@ -81,7 +81,7 @@ class EntityBuilder {
                                     entityDefinition.fields.push({
                                         name: fieldName,
                                         options: fieldOptions,
-                                        type: EntityFieldType.Number
+                                        type: EntityFieldType.Decimal
                                     });
                                 case "String":
                                     entityDefinition.fields.push({
@@ -397,7 +397,7 @@ class EntityBuilder {
             switch (fieldDef.type) {
                 case EntityFieldType.Boolean:
                     exprs.push(macro record.field($v{fieldDef.name}, $i{fieldDef.name} == true ? 1 : 0));
-                case EntityFieldType.Number | EntityFieldType.Text:
+                case EntityFieldType.Number | EntityFieldType.Decimal | EntityFieldType.Text:
                     exprs.push(macro record.field($v{fieldDef.name}, $i{fieldDef.name}));
                 case EntityFieldType.Date:
                     exprs.push(macro record.field($v{fieldDef.name}, entities.EntityUtils.dateToIso8601($i{fieldDef.name})));
@@ -445,7 +445,7 @@ class EntityBuilder {
                         this.$varName = (value == 1) ? true : false;
                         this._hasData = true;
                     });
-                case EntityFieldType.Number | EntityFieldType.Text:
+                case EntityFieldType.Number | EntityFieldType.Decimal | EntityFieldType.Text:
                     simpleExprs.push(macro var fieldName = $v{fieldName});
                     simpleExprs.push(macro if (fieldPrefix != null && fieldPrefix.length > 0) fieldName = fieldPrefix + "." + fieldName);
                     simpleExprs.push(macro var value = records[0].field(fieldName));
@@ -681,7 +681,7 @@ class EntityBuilder {
         var linkExprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date | EntityFieldType.Binary:
+                case EntityFieldType.Number | EntityFieldType.Decimal | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date | EntityFieldType.Binary:
                     exprs.push(macro schema.columns.push({
                         name: $v{fieldDef.name},
                         type: $v{entityFieldTypeToColumnType(fieldDef.type)},
@@ -1895,7 +1895,7 @@ class EntityBuilder {
         var exprs:Array<Expr> = [];
         for (fieldDef in entityDefinition.fields) {
             switch (fieldDef.type) {
-                case EntityFieldType.Number | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date | EntityFieldType.Binary:
+                case EntityFieldType.Number | EntityFieldType.Decimal | EntityFieldType.Text | EntityFieldType.Boolean | EntityFieldType.Date | EntityFieldType.Binary:
                 case EntityFieldType.Array(entityFieldType):
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToOne(table1, field1, table2, field2), type):
                 case EntityFieldType.Class(className, EntityFieldRelationship.OneToMany(table1, field1, table2, field2), type):
@@ -2138,6 +2138,8 @@ class EntityBuilder {
                 ColumnType.Number;
             case EntityFieldType.Number:
                 ColumnType.Number;
+            case EntityFieldType.Decimal:
+                ColumnType.Decimal;
             case EntityFieldType.Text:
                 ColumnType.Memo;
             case EntityFieldType.Date:
@@ -2192,7 +2194,7 @@ class EntityBuilder {
             case "Int":
                 return EntityFieldType.Number;
             case "Float":
-                return EntityFieldType.Number;
+                return EntityFieldType.Decimal;
             case "String":
                 return EntityFieldType.Text;
             case "Date":

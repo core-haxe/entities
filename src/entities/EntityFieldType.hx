@@ -4,6 +4,7 @@ enum EntityFieldType {
     Unknown;
     Boolean;
     Number;
+    Decimal;
     Text;
     Date;
     Binary;
