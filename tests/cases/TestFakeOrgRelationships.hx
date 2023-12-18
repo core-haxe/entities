@@ -120,6 +120,9 @@ class TestFakeOrgRelationships extends TestBase {
             Assert.equals("/icons/orgs/shared_icon.png", worker.organizations[1].icon.path);
             Assert.equals(4, worker.organizations[1].address.lines.length);
             Assert.equals("27 Marge Avenue", worker.organizations[1].address.lines[0].text);
+            trace("----------------------------------------------");
+            trace(worker.organizations[1].address.lines);
+            trace("----------------------------------------------");
             Assert.equals("Westville", worker.organizations[1].address.lines[1].text);
             Assert.equals("Springfield", worker.organizations[1].address.lines[2].text);
             Assert.equals("Oregon", worker.organizations[1].address.lines[3].text);
