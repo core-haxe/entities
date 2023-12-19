@@ -651,7 +651,7 @@ class EntityBuilder {
             kind: FFun({
                 args: [{
                     name: "records",
-                    type: macro: Array<db.Record>
+                    type: macro: db.RecordSet
                 }, {
                     name: "fieldPrefix",
                     type: macro: String
@@ -1241,7 +1241,7 @@ class EntityBuilder {
             access: [APrivate],
             meta: [{name: ":noCompletion", pos: Context.currentPos()}],
             kind: FFun({
-                args: [{name: "tableName", type: macro: String}, {name: "records", type: macro: Array<db.Record>}],
+                args: [{name: "tableName", type: macro: String}, {name: "records", type: macro: db.RecordSet}],
                 ret: macro: promises.Promise<Bool>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
@@ -1853,7 +1853,7 @@ class EntityBuilder {
                             return result.table.find(query);
                         }).then(result -> {
                             if (result.data != null || result.data.length != 0) {
-                                var map:Map<String, Array<db.Record>> = [];
+                                var map:Map<String, db.RecordSet> = [];
                                 var mapKeys:Array<String> = [];
                                 for (record in result.data) {
                                     var fieldValue = Std.string(record.field($v{primaryKeyFieldName}));
