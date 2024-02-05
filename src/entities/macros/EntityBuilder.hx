@@ -1642,7 +1642,7 @@ class EntityBuilder {
             access: [APublic],
             kind: FFun({
                 args: [],
-                ret: macro: promises.Promise<Bool>,
+                ret: macro: promises.Promise<$entityComplexType>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
                         connect().then(success -> {
@@ -1690,7 +1690,7 @@ class EntityBuilder {
                             return promises.PromiseUtils.runSequentially(list);
                         }).then(result -> {
                             this.notify(entities.EntityNotificationType.Deleted);
-                            resolve(true);
+                            resolve(this);
                         }, error -> {
                             reject(error);
                         });
