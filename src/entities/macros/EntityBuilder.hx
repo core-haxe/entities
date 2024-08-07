@@ -844,41 +844,27 @@ class EntityBuilder {
                 ret: macro: promises.Promise<Bool>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
-                        if (_checkedTables) {
-                            resolve(true);
-                        } else {
-                            entities.EntityManager.instance.database.table(schema.name).then(result -> {
-                                if (result.table.exists) {
-                                    result.table.applySchema(schema).then(result -> {
-                                        _checkedTables = true;
-                                        resolve(true);
-                                        return null;
-                                    }, error -> {
-                                        reject(error);
-                                    });
-                                    return null;
-                                }
-                                entities.EntityManager.instance.database.createTable(schema.name, schema.columns).then(result -> {
-                                    _checkedTables = true;
+                        entities.EntityManager.instance.database.table(schema.name).then(result -> {
+                            if (result.table.exists) {
+                                result.table.applySchema(schema).then(result -> {
                                     resolve(true);
+                                    return null;
                                 }, error -> {
                                     reject(error);
                                 });
+                                return null;
+                            }
+                            entities.EntityManager.instance.database.createTable(schema.name, schema.columns).then(result -> {
+                                resolve(true);
                             }, error -> {
                                 reject(error);
                             });
-                        }
+                        }, error -> {
+                            reject(error);
+                        });
                     });
                 }
             }),
-            pos: Context.currentPos()
-        });
-
-        fields.push({
-            name: "_checkedTables",
-            access: [APrivate, AStatic],
-            kind: FVar(macro: Bool, macro false),
-            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}, {name: ":optional", pos: Context.currentPos()}],
             pos: Context.currentPos()
         });
 
