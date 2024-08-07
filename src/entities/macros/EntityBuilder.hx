@@ -777,31 +777,36 @@ class EntityBuilder {
                 ret: macro: promises.Promise<Bool>,
                 expr: macro {
                     return new promises.Promise((resolve, reject) -> {
-                        if (_checkingTables) {
-                            _deferredCheckTablesPromises.push({resolve: resolve, reject: reject});
-                            return;
-                        }
-                        _checkingTables = true;
-                        CheckTableSchema(TableSchema()).then(result -> {
-                            return CheckLinkTables();
-                        }).then(entity -> {
-                            var list:Array<() -> promises.Promise<Any>> = [];
-                            $b{exprs};
-                            return promises.PromiseUtils.runSequentially(list);
-                        }).then(entity -> {
+                        if (_checkedTables) {
                             resolve(true);
-                            while (_deferredCheckTablesPromises.length > 0) {
-                                _deferredCheckTablesPromises.pop().resolve(true);
+                        } else {
+                            if (_checkingTables) {
+                                _deferredCheckTablesPromises.push({resolve: resolve, reject: reject});
+                                return;
                             }
-                            _checkingTables = false;
-                            return null;
-                        }, error -> {
-                            reject(error);
-                            while (_deferredCheckTablesPromises.length > 0) {
-                                _deferredCheckTablesPromises.pop().reject(error);
-                            }
-                            _checkingTables = false;
-                        });
+                            _checkingTables = true;
+                            CheckTableSchema(TableSchema()).then(result -> {
+                                return CheckLinkTables();
+                            }).then(entity -> {
+                                var list:Array<() -> promises.Promise<Any>> = [];
+                                $b{exprs};
+                                return promises.PromiseUtils.runSequentially(list);
+                            }).then(entity -> {
+                                _checkedTables = true;
+                                resolve(true);
+                                while (_deferredCheckTablesPromises.length > 0) {
+                                    _deferredCheckTablesPromises.pop().resolve(true);
+                                }
+                                _checkingTables = false;
+                                return null;
+                            }, error -> {
+                                reject(error);
+                                while (_deferredCheckTablesPromises.length > 0) {
+                                    _deferredCheckTablesPromises.pop().reject(error);
+                                }
+                                _checkingTables = false;
+                            });
+                        }
                     });
                 }
             }),
@@ -865,6 +870,14 @@ class EntityBuilder {
                     });
                 }
             }),
+            pos: Context.currentPos()
+        });
+
+        fields.push({
+            name: "_checkedTables",
+            access: [APrivate, AStatic],
+            kind: FVar(macro: Bool, macro false),
+            meta: [{name: ":jignored", pos: Context.currentPos()}, {name: ":noCompletion", pos: Context.currentPos()}, {name: ":optional", pos: Context.currentPos()}],
             pos: Context.currentPos()
         });
 
