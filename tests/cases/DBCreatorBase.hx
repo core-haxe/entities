@@ -21,6 +21,7 @@ class DBCreatorBase {
                 File.saveContent(sqliteFilename, "");
             }
 
+            resetEntities();
             EntityManager.instance.database = db;
             @:privateAccess EntityManager.instance.connect().then(_ -> {
                 return db.delete();
@@ -38,6 +39,10 @@ class DBCreatorBase {
                 trace(Json.stringify(error));
             });
         });
+    }
+
+    public function resetEntities() {
+
     }
 
     public function createDummyData() {

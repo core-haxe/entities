@@ -9,6 +9,14 @@ class DBCreator extends DBCreatorBase {
         sqliteFilename = "books.db";
     }
 
+    public override function resetEntities() {
+        super.resetEntities();
+        @:privateAccess Author._checkedTables = false;
+        @:privateAccess Book._checkedTables = false;
+        @:privateAccess Category._checkedTables = false;
+        @:privateAccess Publisher._checkedTables = false;
+    }
+
     public override function createDummyData() {
         return new Promise((resolve, reject) -> {
             var list:Array<() -> promises.Promise<Any>> = [];

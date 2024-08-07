@@ -9,6 +9,12 @@ class DBCreator extends DBCreatorBase {
         sqliteFilename = "users.db";
     }
     
+    public override function resetEntities() {
+        super.resetEntities();
+        @:privateAccess User._checkedTables = false;
+        @:privateAccess Property._checkedTables = false;
+    }
+    
     public override function createDummyData() {
         return new Promise((resolve, reject) -> {
             var list = [];

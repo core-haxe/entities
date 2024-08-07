@@ -10,6 +10,12 @@ class DBCreator extends DBCreatorBase {
         sqliteFilename = "basic.db";
     }
 
+    public override function resetEntities() {
+        super.resetEntities();
+        @:privateAccess BasicEntity._checkedTables = false;
+        @:privateAccess BasicEntityStructInit._checkedTables = false;
+    }
+
     public override function createDummyData() {
         return new Promise((resolve, reject) -> {
             var list = [];

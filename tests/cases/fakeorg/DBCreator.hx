@@ -12,6 +12,16 @@ class DBCreator extends DBCreatorBase {
         sqliteFilename = "fakeorg.db";
     }
 
+    public override function resetEntities() {
+        super.resetEntities();
+        @:privateAccess Address._checkedTables = false;
+        @:privateAccess AddressLine._checkedTables = false;
+        @:privateAccess Icon._checkedTables = false;
+        @:privateAccess Image._checkedTables = false;
+        @:privateAccess Organization._checkedTables = false;
+        @:privateAccess Worker._checkedTables = false;
+    }
+
     public override function createDummyData() {
         return new Promise((resolve, reject) -> {
             var list:Array<() -> promises.Promise<Any>> = [];
