@@ -42,6 +42,7 @@ class TestAll {
 
     private static function addBasicCases(runner:Runner, db:IDatabase) {
         runner.addCase(new TestBasic(db));
+        runner.addCase(new TestLimits(db));
         runner.addCase(new TestMultipleCalls(db));
         runner.addCase(new TestBasicStructInit(db));
     }
