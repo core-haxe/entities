@@ -1854,6 +1854,11 @@ class EntityBuilder {
                     type: macro: Query.QueryExpr,
                     opt: true,
                     value: macro null
+                }, {
+                    name: "limit",
+                    type: macro: Null<Int>,
+                    opt: true,
+                    value: macro null
                 }],
                 ret: macro: promises.Promise<Array<$entityComplexType>>,
                 expr: macro {
@@ -1863,6 +1868,9 @@ class EntityBuilder {
                         entity.connect().then(success -> {
                             return entities.EntityManager.instance.database.table(entity.definition().tableName);
                         }).then(result -> {
+                            if (limit != null) {
+                                return result.table.page(0, limit, query);
+                            }
                             return result.table.find(query);
                         }).then(result -> {
                             if (result.data != null || result.data.length != 0) {
