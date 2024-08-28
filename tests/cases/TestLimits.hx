@@ -50,7 +50,6 @@ class TestLimits extends TestBase {
             async.done();
         }, error -> {
             trace("error", error);
-            async.done();
         });
     }
 }
