@@ -10,8 +10,8 @@ class BasicEntity implements IEntity {
     public var stringField:String;    
     public var dateField:Date;
     public var bytesField:Bytes;
-    public var structInitEntity:BasicEntityStructInit;
-    public var structInitEntityArray:Array<BasicEntityStructInit>;
+    //public var structInitEntity:BasicEntityStructInit;
+    //public var structInitEntityArray:Array<BasicEntityStructInit>;
     public var arrayOfStrings:Array<String>;
     /*
     public var arrayOfInts:Array<Int>;

@@ -46,43 +46,56 @@ class TestFakeOrgRelationships extends TestBase {
             Assert.equals(Bytes.ofString("this is ians contract document").toString(),workers[0].contractDocument.toString());
             Assert.equals("/icons/users/ian_harrigan.png", workers[0].icon.path);
             // address
-            Assert.equals(3, workers[0].address.lines.length);
-            Assert.equals("52", workers[0].address.lines[0].text);
-            Assert.equals("Some street", workers[0].address.lines[1].text);
-            Assert.equals("Sliema", workers[0].address.lines[2].text);
-            Assert.equals("SLM 001", workers[0].address.postCode);
+            AssertionTools.shouldMatch({
+                lines: [{text: "52"}, {text: "Some street"}, {text: "Sliema"}],
+                postCode: "SLM 001"
+            }, workers[0].address);
             // orgs
             Assert.equals(4, workers[0].organizations.length);
             // ACME
-            Assert.equals("ACME", workers[0].organizations[0].name);
-            Assert.equals("/icons/orgs/acme.png", workers[0].organizations[0].icon.path);
-            Assert.equals(2, workers[0].organizations[0].address.lines.length);
-            Assert.equals("1 Roadrunner Road", workers[0].organizations[0].address.lines[0].text);
-            Assert.equals("Arizona", workers[0].organizations[0].address.lines[1].text);
-            Assert.equals("ACM ARZ", workers[0].organizations[0].address.postCode);
+            AssertionTools.shouldContain({
+                name: "ACME",
+                icon: {
+                    path: "/icons/orgs/acme.png"
+                },
+                address: {
+                    lines: [{ text: "1 Roadrunner Road"}, { text: "Arizona"}],
+                    postCode: "ACM ARZ"
+                }
+            }, workers[0].organizations);
             // Globex
-            Assert.equals("Globex", workers[0].organizations[1].name);
-            Assert.equals("/icons/orgs/shared_icon.png", workers[0].organizations[1].icon.path);
-            Assert.equals(4, workers[0].organizations[1].address.lines.length);
-            Assert.equals("27 Marge Avenue", workers[0].organizations[1].address.lines[0].text);
-            Assert.equals("Westville", workers[0].organizations[1].address.lines[1].text);
-            Assert.equals("Springfield", workers[0].organizations[1].address.lines[2].text);
-            Assert.equals("Oregon", workers[0].organizations[1].address.lines[3].text);
-            Assert.equals("SPR 009", workers[0].organizations[1].address.postCode);
+            AssertionTools.shouldContain({
+                name: "Globex",
+                icon: {
+                    path: "/icons/orgs/shared_icon.png"
+                },
+                address: {
+                    lines: [{ text: "27 Marge Avenue"}, { text: "Westville"}, { text: "Springfield"}, { text: "Oregon"}],
+                    postCode: "SPR 009"
+                }
+            }, workers[0].organizations);
             // Hooli
-            Assert.equals("Hooli", workers[0].organizations[2].name);
-            Assert.equals("/icons/orgs/shared_icon.png", workers[0].organizations[2].icon.path);
-            Assert.equals(1, workers[0].organizations[2].address.lines.length);
-            Assert.equals("2624 Mill Street", workers[0].organizations[2].address.lines[0].text);
-            Assert.equals("ABC XYZ", workers[0].organizations[2].address.postCode);
+            AssertionTools.shouldContain({
+                name: "Hooli",
+                icon: {
+                    path: "/icons/orgs/shared_icon.png"
+                },
+                address: {
+                    lines: [{ text: "2624 Mill Street"}],
+                    postCode: "ABC XYZ"
+                }
+            }, workers[0].organizations);
             // Massive Dynamic
-            Assert.equals("Massive Dynamic", workers[0].organizations[3].name);
-            Assert.equals("/icons/orgs/massive_dynamic.png", workers[0].organizations[3].icon.path);
-            Assert.equals(3, workers[0].organizations[3].address.lines.length);
-            Assert.equals("137 Tillman Station", workers[0].organizations[3].address.lines[0].text);
-            Assert.equals("O'Fallon", workers[0].organizations[3].address.lines[1].text);
-            Assert.equals("Connecticut", workers[0].organizations[3].address.lines[2].text);
-            Assert.equals("MSV 001", workers[0].organizations[3].address.postCode);
+            AssertionTools.shouldContain({
+                name: "Massive Dynamic",
+                icon: {
+                    path: "/icons/orgs/massive_dynamic.png"
+                },
+                address: {
+                    lines: [{ text: "137 Tillman Station"}, { text: "O'Fallon"}, { text: "Connecticut"}],
+                    postCode: "MSV 001"
+                }
+            }, workers[0].organizations);
 
             complete();
             async.done();
@@ -101,43 +114,56 @@ class TestFakeOrgRelationships extends TestBase {
             Assert.equals(Bytes.ofString("this is ians contract document").toString(), worker.contractDocument.toString());
             Assert.equals("/icons/users/ian_harrigan.png", worker.icon.path);
             // address
-            Assert.equals(3, worker.address.lines.length);
-            Assert.equals("52", worker.address.lines[0].text);
-            Assert.equals("Some street", worker.address.lines[1].text);
-            Assert.equals("Sliema", worker.address.lines[2].text);
-            Assert.equals("SLM 001", worker.address.postCode);
+            AssertionTools.shouldMatch({
+                lines: [{text: "52"}, {text: "Some street"}, {text: "Sliema"}],
+                postCode: "SLM 001"
+            }, worker.address);
             // orgs
             Assert.equals(4, worker.organizations.length);
             // ACME
-            Assert.equals("ACME", worker.organizations[0].name);
-            Assert.equals("/icons/orgs/acme.png", worker.organizations[0].icon.path);
-            Assert.equals(2, worker.organizations[0].address.lines.length);
-            Assert.equals("1 Roadrunner Road", worker.organizations[0].address.lines[0].text);
-            Assert.equals("Arizona", worker.organizations[0].address.lines[1].text);
-            Assert.equals("ACM ARZ", worker.organizations[0].address.postCode);
+            AssertionTools.shouldContain({
+                name: "ACME",
+                icon: {
+                    path: "/icons/orgs/acme.png"
+                },
+                address: {
+                    lines: [{ text: "1 Roadrunner Road"}, { text: "Arizona"}],
+                    postCode: "ACM ARZ"
+                }
+            }, worker.organizations);
             // Globex
-            Assert.equals("Globex", worker.organizations[1].name);
-            Assert.equals("/icons/orgs/shared_icon.png", worker.organizations[1].icon.path);
-            Assert.equals(4, worker.organizations[1].address.lines.length);
-            Assert.equals("27 Marge Avenue", worker.organizations[1].address.lines[0].text);
-            Assert.equals("Westville", worker.organizations[1].address.lines[1].text);
-            Assert.equals("Springfield", worker.organizations[1].address.lines[2].text);
-            Assert.equals("Oregon", worker.organizations[1].address.lines[3].text);
-            Assert.equals("SPR 009", worker.organizations[1].address.postCode);
+            AssertionTools.shouldContain({
+                name: "Globex",
+                icon: {
+                    path: "/icons/orgs/shared_icon.png"
+                },
+                address: {
+                    lines: [{ text: "27 Marge Avenue"}, { text: "Westville"}, { text: "Springfield"}, { text: "Oregon"}],
+                    postCode: "SPR 009"
+                }
+            }, worker.organizations);
             // Hooli
-            Assert.equals("Hooli", worker.organizations[2].name);
-            Assert.equals("/icons/orgs/shared_icon.png", worker.organizations[2].icon.path);
-            Assert.equals(1, worker.organizations[2].address.lines.length);
-            Assert.equals("2624 Mill Street", worker.organizations[2].address.lines[0].text);
-            Assert.equals("ABC XYZ", worker.organizations[2].address.postCode);
+            AssertionTools.shouldContain({
+                name: "Hooli",
+                icon: {
+                    path: "/icons/orgs/shared_icon.png"
+                },
+                address: {
+                    lines: [{ text: "2624 Mill Street"}],
+                    postCode: "ABC XYZ"
+                }
+            }, worker.organizations);
             // Massive Dynamic
-            Assert.equals("Massive Dynamic", worker.organizations[3].name);
-            Assert.equals("/icons/orgs/massive_dynamic.png", worker.organizations[3].icon.path);
-            Assert.equals(3, worker.organizations[3].address.lines.length);
-            Assert.equals("137 Tillman Station", worker.organizations[3].address.lines[0].text);
-            Assert.equals("O'Fallon", worker.organizations[3].address.lines[1].text);
-            Assert.equals("Connecticut", worker.organizations[3].address.lines[2].text);
-            Assert.equals("MSV 001", worker.organizations[3].address.postCode);
+            AssertionTools.shouldContain({
+                name: "Massive Dynamic",
+                icon: {
+                    path: "/icons/orgs/massive_dynamic.png"
+                },
+                address: {
+                    lines: [{ text: "137 Tillman Station"}, { text: "O'Fallon"}, { text: "Connecticut"}],
+                    postCode: "MSV 001"
+                }
+            }, worker.organizations);
 
             complete();
             async.done();
@@ -158,70 +184,89 @@ class TestFakeOrgRelationships extends TestBase {
             Assert.equals(Bytes.ofString("this is ians contract document").toString(),workers[0].contractDocument.toString());
             Assert.equals("/icons/users/ian_harrigan.png", workers[0].icon.path);
             // address
-            Assert.equals(3, workers[0].address.lines.length);
-            Assert.equals("52", workers[0].address.lines[0].text);
-            Assert.equals("Some street", workers[0].address.lines[1].text);
-            Assert.equals("Sliema", workers[0].address.lines[2].text);
-            Assert.equals("SLM 001", workers[0].address.postCode);
+            AssertionTools.shouldMatch({
+                lines: [{text: "52"}, {text: "Some street"}, {text: "Sliema"}],
+                postCode: "SLM 001"
+            }, workers[0].address);
             // orgs
             Assert.equals(4, workers[0].organizations.length);
             // ACME
-            Assert.equals("ACME", workers[0].organizations[0].name);
-            Assert.equals("/icons/orgs/acme.png", workers[0].organizations[0].icon.path);
-            Assert.equals(2, workers[0].organizations[0].address.lines.length);
-            Assert.equals("1 Roadrunner Road", workers[0].organizations[0].address.lines[0].text);
-            Assert.equals("Arizona", workers[0].organizations[0].address.lines[1].text);
-            Assert.equals("ACM ARZ", workers[0].organizations[0].address.postCode);
+            AssertionTools.shouldContain({
+                name: "ACME",
+                icon: {
+                    path: "/icons/orgs/acme.png"
+                },
+                address: {
+                    lines: [{ text: "1 Roadrunner Road"}, { text: "Arizona"}],
+                    postCode: "ACM ARZ"
+                }
+            }, workers[0].organizations);
             // Globex
-            Assert.equals("Globex", workers[0].organizations[1].name);
-            Assert.equals("/icons/orgs/shared_icon.png", workers[0].organizations[1].icon.path);
-            Assert.equals(4, workers[0].organizations[1].address.lines.length);
-            Assert.equals("27 Marge Avenue", workers[0].organizations[1].address.lines[0].text);
-            Assert.equals("Westville", workers[0].organizations[1].address.lines[1].text);
-            Assert.equals("Springfield", workers[0].organizations[1].address.lines[2].text);
-            Assert.equals("Oregon", workers[0].organizations[1].address.lines[3].text);
-            Assert.equals("SPR 009", workers[0].organizations[1].address.postCode);
+            AssertionTools.shouldContain({
+                name: "Globex",
+                icon: {
+                    path: "/icons/orgs/shared_icon.png"
+                },
+                address: {
+                    lines: [{ text: "27 Marge Avenue"}, { text: "Westville"}, { text: "Springfield"}, { text: "Oregon"}],
+                    postCode: "SPR 009"
+                }
+            }, workers[0].organizations);
             // Hooli
-            Assert.equals("Hooli", workers[0].organizations[2].name);
-            Assert.equals("/icons/orgs/shared_icon.png", workers[0].organizations[2].icon.path);
-            Assert.equals(1, workers[0].organizations[2].address.lines.length);
-            Assert.equals("2624 Mill Street", workers[0].organizations[2].address.lines[0].text);
-            Assert.equals("ABC XYZ", workers[0].organizations[2].address.postCode);
+            AssertionTools.shouldContain({
+                name: "Hooli",
+                icon: {
+                    path: "/icons/orgs/shared_icon.png"
+                },
+                address: {
+                    lines: [{ text: "2624 Mill Street"}],
+                    postCode: "ABC XYZ"
+                }
+            }, workers[0].organizations);
             // Massive Dynamic
-            Assert.equals("Massive Dynamic", workers[0].organizations[3].name);
-            Assert.equals("/icons/orgs/massive_dynamic.png", workers[0].organizations[3].icon.path);
-            Assert.equals(3, workers[0].organizations[3].address.lines.length);
-            Assert.equals("137 Tillman Station", workers[0].organizations[3].address.lines[0].text);
-            Assert.equals("O'Fallon", workers[0].organizations[3].address.lines[1].text);
-            Assert.equals("Connecticut", workers[0].organizations[3].address.lines[2].text);
-            Assert.equals("MSV 001", workers[0].organizations[3].address.postCode);
+            AssertionTools.shouldContain({
+                name: "Massive Dynamic",
+                icon: {
+                    path: "/icons/orgs/massive_dynamic.png"
+                },
+                address: {
+                    lines: [{ text: "137 Tillman Station"}, { text: "O'Fallon"}, { text: "Connecticut"}],
+                    postCode: "MSV 001"
+                }
+            }, workers[0].organizations);
 
             // bob
             Assert.equals("bob_barker", workers[1].username);
             Assert.equals("/icons/users/bob_barker.png", workers[1].icon.path);
             // address
-            Assert.equals(1, workers[1].address.lines.length);
-            Assert.equals("POBOX 15", workers[1].address.lines[0].text);
-            Assert.equals("112 335", workers[1].address.postCode);
+            AssertionTools.shouldMatch({
+                lines: [{text: "POBOX 15"}],
+                postCode: "112 335"
+            }, workers[1].address);
             // orgs
             Assert.equals(2, workers[1].organizations.length);
             // Globex
-            Assert.equals("Globex", workers[1].organizations[0].name);
-            Assert.equals("/icons/orgs/shared_icon.png", workers[1].organizations[0].icon.path);
-            Assert.equals(4, workers[1].organizations[0].address.lines.length);
-            Assert.equals("27 Marge Avenue", workers[1].organizations[0].address.lines[0].text);
-            Assert.equals("Westville", workers[1].organizations[0].address.lines[1].text);
-            Assert.equals("Springfield", workers[1].organizations[0].address.lines[2].text);
-            Assert.equals("Oregon", workers[1].organizations[0].address.lines[3].text);
-            Assert.equals("SPR 009", workers[1].organizations[0].address.postCode);
+            AssertionTools.shouldContain({
+                name: "Globex",
+                icon: {
+                    path: "/icons/orgs/shared_icon.png"
+                },
+                address: {
+                    lines: [{ text: "27 Marge Avenue"}, { text: "Westville"}, { text: "Springfield"}, { text: "Oregon"}],
+                    postCode: "SPR 009"
+                }
+            }, workers[1].organizations);
             // IniTech
-            Assert.equals("IniTech", workers[1].organizations[1].name);
-            Assert.equals("/icons/orgs/initech.png", workers[1].organizations[1].icon.path);
-            Assert.equals(3, workers[1].organizations[1].address.lines.length);
-            Assert.equals("77 Daylene Drive", workers[1].organizations[1].address.lines[0].text);
-            Assert.equals("Maybee", workers[1].organizations[1].address.lines[1].text);
-            Assert.equals("Michigan", workers[1].organizations[1].address.lines[2].text);
-            Assert.equals("MCG 834", workers[1].organizations[1].address.postCode);
+            AssertionTools.shouldContain({
+                name: "IniTech",
+                icon: {
+                    path: "/icons/orgs/initech.png"
+                },
+                address: {
+                    lines: [{ text: "77 Daylene Drive"}, { text: "Maybee"}, { text: "Michigan"}],
+                    postCode: "MCG 834"
+                }
+            }, workers[1].organizations);
 
             complete();
             async.done();

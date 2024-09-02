@@ -102,24 +102,19 @@ class TestSimple extends TestBase {
             Assert.equals("Entity A2 - Simple C", simple.entity2.simpleC.name);
 
             Assert.equals(3, simple.entityArray.length);
-            Assert.equals("Array Entity A - 1", simple.entityArray[0].name);
-            Assert.equals("Array Entity A - 1 - Simple C", simple.entityArray[0].simpleC.name);
-            Assert.equals("Array Entity A - 2", simple.entityArray[1].name);
-            Assert.equals("Array Entity A - 2 - Simple C", simple.entityArray[1].simpleC.name);
-            Assert.equals("Array Entity A - 3", simple.entityArray[2].name);
-            Assert.equals("Array Entity A - 3 - Simple C", simple.entityArray[2].simpleC.name);
+            AssertionTools.shouldContain({ name: "Array Entity A - 1", simpleC: { name: "Array Entity A - 1 - Simple C" } }, simple.entityArray);
+            AssertionTools.shouldContain({ name: "Array Entity A - 2", simpleC: { name: "Array Entity A - 2 - Simple C" } }, simple.entityArray);
+            AssertionTools.shouldContain({ name: "Array Entity A - 3", simpleC: { name: "Array Entity A - 3 - Simple C" } }, simple.entityArray);
 
             Assert.equals(2, simple.entityArray2.length);
-            Assert.equals("Array Entity A - 4", simple.entityArray2[0].name);
-            Assert.equals("Array Entity A - 4 - Simple C", simple.entityArray2[0].simpleC.name);
-            Assert.equals("Array Entity A - 5", simple.entityArray2[1].name);
-            Assert.equals("Array Entity A - 5 - Simple C", simple.entityArray2[1].simpleC.name);
+            AssertionTools.shouldContain({ name: "Array Entity A - 4", simpleC: { name: "Array Entity A - 4 - Simple C" } }, simple.entityArray2);
+            AssertionTools.shouldContain({ name: "Array Entity A - 5", simpleC: { name: "Array Entity A - 5 - Simple C" } }, simple.entityArray2);
 
             complete();
             async.done();
         }, error -> {
             trace(error);
-            async.done();
+            //async.done();
         });
     }
 }

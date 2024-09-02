@@ -15,7 +15,7 @@ class TestAll {
 
         databaseBackend = Sys.getEnv("DB_CORE_BACKEND");
         if (databaseBackend == null) {
-            databaseBackend = "sqlite";
+            databaseBackend = "mysql";
         }
 
         trace("DB_CORE_BACKEND: " + databaseBackend);
@@ -75,7 +75,8 @@ class TestAll {
             database: name,
             host: Sys.getEnv("MYSQL_HOST"),
             user: Sys.getEnv("MYSQL_USER"),
-            pass: Sys.getEnv("MYSQL_PASS")
+            pass: Sys.getEnv("MYSQL_PASS"),
+            port: 3306
         });
     }
 }
